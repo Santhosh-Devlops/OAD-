@@ -16,7 +16,7 @@ Every equation of the paper appears as a numbered comment next to the line that 
 | Dynamic Threshold Optimization (DTO) | Eq. 15–20, adaptive decision boundary | `DynamicThresholdOptimizer` |
 | Training / inference | Algorithm 1, Algorithm 2 (drift re-initialisation, parallel offline update) | `DyMeterEngine` |
 | Evaluation | AUCROC/AUCPR, 12 ablations, drift generator, robustness studies | `Metrics`, `Ablation`, `StreamGenerator`, `DyMeterExperiment` |
-| Dashboard | 9 hash-routed pages, downloadable figures, auto-downloaded report | `DyMeterServer`, `src/main/resources/index.html` |
+| Dashboard | 8 hash-routed pages, theme toggle, live progress and downloadable reports | `DyMeterServer`, `src/main/resources/index.html` |
 
 The paper → code audit (including what the previous implementation was missing) is in
 [`docs/EQUATION_TRACEABILITY.md`](docs/EQUATION_TRACEABILITY.md) and
@@ -34,10 +34,13 @@ JDK 17 or later (`javac` and `java` on the `PATH`). No build tool and no third-p
 New-Item -ItemType Directory -Force out | Out-Null
 javac -d out src/main/java/dymeter/*.java
 
-java -cp out dymeter.DyMeterSelfTest                                 # 37 correctness checks
-java -cp out dymeter.DyMeterExperiment --list                        # the 12 ablation variants
-java --add-modules jdk.httpserver -cp out dymeter.DyMeterServer      # lab at http://localhost:8080
+java -cp out dymeter.DyMeterSelfTest
+java --add-modules jdk.httpserver -cp out dymeter.DyMeterServer
 ```
+
+Open `http://localhost:8080` in a browser, upload a CSV, then choose **Run DyMETER**. The dashboard
+and the server terminal both show live stage and percentage progress. Default settings are applied
+automatically; optional tuning controls are tucked under **Advanced options**.
 
 A labelled demo stream ships with the project (`data/sample_stream.csv`, 1500 rows, three concepts,
 ≈5 % anomalies). Regenerate it at any size:
@@ -67,27 +70,26 @@ java -cp out dymeter.DyMeterExperiment --data <path>\ionosphere.csv --variant al
 See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for every option, the dashboard walkthrough and
 the expected self-test output.
 
-## The dashboard (bright, Times New Roman, no theme toggle)
+## The dashboard
 
-Nine pages reachable from the side panel; each step keeps the previous pages routable (`#/upload`,
-`#/pipeline`, `#/metrics`, `#/visuals`, `#/drift`, `#/rows`, `#/ablation`, `#/report`, `#/about`):
+Eight pages reachable from the side panel (`#/upload`, `#/pipeline`, `#/metrics`, `#/visuals`,
+`#/drift`, `#/rows`, `#/report`, `#/about`):
 
 1. **Upload & configure** — file picker with a preview, or the bundled sample stream served from
    `/data/…`.
-2. **Run the pipeline** — variant, epochs, minibatch, drift generator, τ/λ/κ, μ_e, noise, seed, and a
-   trace of the four algorithmic stages.
+2. **Run the pipeline** — select a run speed, keep the recommended defaults, or expand advanced
+   options; follow the live progress bar and stage trace.
 3. **Scores & metrics** — AUCROC, AUCPR, FPR, recall, precision, flagged records, drift counters,
    learned thresholds and the score histogram.
+   Ranking metrics are marked **Not scored** with a reason if labels are missing or the evaluated rows
+   contain only one class; the application does not invent metric values.
 4. **Visualisations** — score vs adaptive threshold, uncertainty and reconstruction error, concept
    timeline. Every figure has a **Download PNG** button; the numbers export as CSV.
 5. **Concept drift timeline** — each episode with the row number where it was declared, U_ctr, R_e,
    μ* at onset and a sentence explaining *why* it is concept drift.
 6. **Row diagnostics** — the complete per-record trace with filters.
-7. **Ablation lab** — all 12 variants on the same stream.
-8. **Report & downloads** — a Markdown report with the dataset details, the number of epochs, the
-   timestamp, the metrics and the drift events (row numbers + reasons) that **downloads
-   automatically** when a run finishes; plus the run JSON and all CSV exports.
-9. **Paper ↔ code map** — each equation with the method that implements it.
+7. **Report & downloads** — a PDF report with dataset details, metrics, drift events and figures.
+8. **How the method works** — a concise paper-to-code map.
 
 ## What the framework does, step by step
 
@@ -112,7 +114,7 @@ src/main/java/dymeter/     Adam, Matrix, Numeric, Pca, AutoEncoder, EvidentialCo
                            ShiftHypernetwork, DynamicThresholdOptimizer, DyMeterEngine,
                            StreamData, StreamGenerator, Metrics, Ablation, DyMeterExperiment,
                            DyMeterServer, DyMeterSelfTest
-src/main/resources/        index.html - the nine-page dashboard
+src/main/resources/        index.html - the eight-page dashboard
 data/sample_stream.csv     self-contained labelled drifting dataset
 docs/                      EQUATION_TRACEABILITY.md, GAP_ANALYSIS.md, REPRODUCTION.md, REPORT.md,
                            results/, legacy/, paper_ripple.txt
@@ -142,5 +144,4 @@ evidence map `g(·)` of Eq. (2). Nothing was dropped silently; the four experime
 *not* part of the DyMETER algorithm (18 third-party baselines, sequence SCD backbones, the Flink
 deployment and the MNIST/FMNIST suites) are documented as out of scope in
 `EQUATION_TRACEABILITY.md` §3.
-#   O A D -  
- 
+#   O A D -  

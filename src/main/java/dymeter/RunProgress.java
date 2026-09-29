@@ -15,8 +15,11 @@ final class RunProgress {
 
     private static volatile String dataset="",variant="",stage="idle",message="",job="";
     private static volatile int stageIndex,epoch,epochs,rows,totalRows,jobIndex,jobCount;
-    private static volatile long startedAt,owner;
+    private static volatile long startedAt;
+    private static volatile Thread owner;
     private static volatile boolean running,offlineUpdate;
+    private static int lastConsolePercent=-1;
+    private static String lastConsoleLabel="";
 
     private RunProgress(){}
 
@@ -36,7 +39,11 @@ final class RunProgress {
         startedAt=System.currentTimeMillis();
         running=true;
         offlineUpdate=false;
-        owner=Thread.currentThread().hashCode();
+        owner=Thread.currentThread();
+        lastConsolePercent=-1;
+        lastConsoleLabel="";
+        System.out.println("Starting "+dataset+" - "+variant);
+        consoleUpdate(true);
     }
 
     /** Marks the variant that the ablation loop is currently training. */
@@ -45,6 +52,7 @@ final class RunProgress {
         job=variantName+" ("+index+"/"+total+")";
         jobIndex=index;
         jobCount=total;
+        consoleUpdate(true);
     }
 
     /** Announces the stage that is about to execute, e.g. "SCD training" with 900 epochs. */
@@ -56,11 +64,13 @@ final class RunProgress {
         epochs=totalEpochs;
         epoch=0;
         rows=0;
+        consoleUpdate(true);
     }
 
     static void epoch(int value){
         if(!mine())return;
         epoch=value;
+        consoleUpdate(false);
     }
 
     /** Streaming stage: records processed out of the streamed segment. */
@@ -73,17 +83,56 @@ final class RunProgress {
         epochs=0;
         rows=value;
         totalRows=total;
+        consoleUpdate(false);
     }
 
-    static void offline(boolean value){offlineUpdate=value;}
+    static void offline(boolean value){
+        offlineUpdate=value;
+        if(running)consoleUpdate(false);
+    }
 
     static synchronized void finish(){
+        consoleUpdate(true,1.0,"Complete");
+        System.out.println();
         running=false;
         stage="idle";
         message="";
     }
 
-    private static boolean mine(){return Thread.currentThread().hashCode()==owner;}
+    static synchronized void fail(String reason){
+        double progress=fraction();
+        running=false;
+        String detail=reason==null||reason.isBlank()?"pipeline failed":reason.replace('\r',' ').replace('\n',' ');
+        consoleUpdate(true,progress,"Failed: "+detail);
+        System.out.println();
+        stage="failed";
+        message=detail;
+    }
+
+    private static boolean mine(){return Thread.currentThread()==owner;}
+
+    private static void consoleUpdate(boolean force){
+        consoleUpdate(force,fraction(),null);
+    }
+
+    private static synchronized void consoleUpdate(boolean force,double progress,String finalLabel){
+        if(finalLabel==null&&!running)return;
+        int percent=(int)Math.round(100*Math.max(0,Math.min(1,progress)));
+        String label=finalLabel==null
+                ?(jobCount>0?job+" | ":"")+stage+(offlineUpdate?" | offline fine-tuning":"")
+                :finalLabel;
+        if(!force&&percent==lastConsolePercent&&label.equals(lastConsoleLabel))return;
+        int width=24,filled=(int)Math.round(width*percent/100.0);
+        StringBuilder bar=new StringBuilder(width);
+        for(int i=0;i<width;i++)bar.append(i<filled?'#':'-');
+        String detail=label;
+        if(finalLabel==null&&epochs>0)detail+=" | epoch "+epoch+"/"+epochs;
+        else if(finalLabel==null&&stageIndex>=STAGE_COUNT)detail+=" | record "+rows+"/"+totalRows;
+        System.out.printf(Locale.ROOT,"\rProgress [%s] %3d%% | %s",bar,percent,detail);
+        System.out.flush();
+        lastConsolePercent=percent;
+        lastConsoleLabel=label;
+    }
 
     /** Fraction of the work completed, combining the stage index with the current epoch or record. */
     static double fraction(){

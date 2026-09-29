@@ -2,78 +2,104 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DyMETER · Online anomaly detection lab</title>
 <style>
+:root{color-scheme:light;--page:#f4f7ff;--panel:#fff;--ink:#17233b;--muted:#52627d;--line:#d8e1f0;--tint:#edf3ff;--accent:#315ce8;--accent-strong:#2447c7;--shadow:0 12px 32px #24447b12}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{background:#f7f9fc;color:#111827;font-family:"Times New Roman",Times,Georgia,serif;font-size:17px;line-height:1.55}
-a{color:#1d4ed8}
+body{background:var(--page);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.55;transition:background .2s,color .2s}
+a{color:var(--accent)}
 .layout{display:flex;min-height:100vh}
-.sidebar{width:310px;flex:0 0 310px;background:linear-gradient(180deg,#fff,#eef4ff);border-right:3px solid #1d4ed8;
-padding:20px 18px;position:sticky;top:0;height:100vh;overflow:auto}
-.brand{display:flex;gap:10px;align-items:center;margin-bottom:6px}
-.logo{width:46px;height:46px;border-radius:12px;background:#1d4ed8;color:#fff;display:grid;place-items:center;font-size:22px;font-weight:bold}
-.brand h1{font-size:20px;margin:0}
-.brand small{color:#475569;font-size:12px}
-.paper{font-size:12.5px;color:#475569;border-left:4px solid #93c5fd;padding:6px 10px;margin:12px 0 16px;background:#fff;border-radius:0 8px 8px 0}
-nav{display:flex;flex-direction:column;gap:6px}
-nav a{display:flex;gap:10px;align-items:center;text-decoration:none;color:#1f2937;padding:10px 12px;border-radius:10px;
-border:1px solid transparent;font-size:15.5px}
-nav a .num{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:bold}
-nav a:hover{background:#e0ecff;border-color:#bfdbfe}
-nav a.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
-nav a.active .num{background:#fff;color:#1d4ed8}
-.status{margin-top:18px;font-size:13px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;color:#334155}
-.status b{color:#1d4ed8}
-main{flex:1;min-width:0;padding:26px 30px 70px}
-.page{display:none;max-width:1150px}
-.page.active{display:block}
-h2{font-size:24px;margin:0 0 6px}
-.lead{color:#475569;margin:0 0 18px;font-size:15.5px}
-.card{background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px #0f172a12}
-.card h3{margin:0 0 12px;font-size:18px}
+.sidebar{width:286px;flex:0 0 286px;background:linear-gradient(155deg,#fff 0%,#edf3ff 100%);border-right:1px solid #cfdbef;
+padding:22px 18px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#4673ff,#5946d8);color:#fff;display:grid;place-items:center;font-size:23px;font-weight:800;box-shadow:0 8px 18px #315ce833}
+.brand h1{font-size:21px;letter-spacing:.02em;margin:0;color:#172a52}
+.brand small{color:#52627d;font-size:12px}
+.paper{font-size:12px;color:#485a79;border-left:4px solid #7ca0ff;padding:9px 11px;margin:14px 0 18px;background:#fff;border-radius:0 10px 10px 0}
+nav{display:flex;flex-direction:column;gap:5px}
+nav a{display:flex;gap:10px;align-items:center;text-decoration:none;color:#283851;padding:9px 11px;border-radius:11px;
+border:1px solid transparent;font-size:14px;font-weight:600;transition:background .15s,color .15s}
+nav a .num{display:grid;place-items:center;width:27px;height:27px;border-radius:9px;background:#e0e9ff;color:#3153bd;font-size:12px;font-weight:800}
+nav a:hover{background:#e4ecff;border-color:#ccd9ff}
+nav a.active{background:linear-gradient(100deg,#315ce8,#574ed5);color:#fff;border-color:transparent;box-shadow:0 6px 15px #315ce82b}
+nav a.active .num{background:#fff;color:#315ce8}
+.theme-toggle{width:100%;margin-top:14px;background:#fff;color:#29416e;border:1px solid #cbd8ee;text-align:left}
+.status{margin-top:12px;font-size:12.5px;background:#fff;border:1px solid #d5e0f0;border-radius:12px;padding:11px 12px;color:#42516b}
+.status b{color:#315ce8}
+main{flex:1;min-width:0;padding:30px clamp(20px,4vw,56px) 70px}
+.page{display:none;max-width:1180px}
+.page.active{display:block;animation:enter .25s ease-out}
+@keyframes enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+h2{font-size:clamp(25px,3vw,34px);line-height:1.2;letter-spacing:-.025em;color:#2348b8;margin:0 0 8px}
+.lead{color:var(--muted);margin:0 0 20px;font-size:15px;max-width:850px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:20px 22px;margin-bottom:17px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 12px;font-size:18px;letter-spacing:-.01em}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-label{display:block;font-size:13px;color:#334155;text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px}
-input[type=file],select,input[type=number],input[type=text]{width:100%;padding:9px 10px;border:1px solid #94a3b8;
-border-radius:8px;background:#fff;font-family:inherit;font-size:15px;color:#0f172a}
-input[type=file]{border-style:dashed;background:#f8fbff}
-button{border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:15px;cursor:pointer;background:#1d4ed8;color:#fff;font-weight:bold}
-button:hover{background:#1e40af}
-button.alt{background:#fff;color:#1d4ed8;border:2px solid #1d4ed8}
-button.small{padding:7px 12px;font-size:13.5px}
-button:disabled{opacity:.5;cursor:progress}
+label{display:block;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 4px}
+input[type=file],select,input[type=number],input[type=text]{width:100%;padding:10px 11px;border:1px solid #b8c7df;
+border-radius:10px;background:var(--panel);font-family:inherit;font-size:14px;color:var(--ink)}
+input[type=file]{border-style:dashed;background:var(--tint)}
+button{border:0;border-radius:11px;padding:11px 17px;font-family:inherit;font-size:14px;cursor:pointer;background:linear-gradient(100deg,#315ce8,#514fd5);color:#fff;font-weight:700;box-shadow:0 5px 14px #315ce826;transition:transform .15s,filter .15s}
+button:hover{filter:brightness(.95);transform:translateY(-1px)}
+button.alt{background:var(--panel);color:var(--accent);border:1px solid #aebff2;box-shadow:none}
+button.small{padding:7px 12px;font-size:12.5px}
+button:disabled{opacity:.5;cursor:progress;transform:none}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
-table{width:100%;border-collapse:collapse;font-size:14.5px}
-th,td{border-bottom:1px solid #e2e8f0;padding:8px 9px;text-align:left}
-th{background:#eff6ff;color:#1e3a8a;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
-tr:hover td{background:#f8fbff}
-.tablewrap{max-height:440px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.kpi div{background:#f1f5ff;border:1px solid #c7d2fe;border-radius:12px;padding:12px}
-.kpi small{display:block;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
-.kpi b{font-size:22px}
-canvas{width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:12px}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#334155;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left}
+th{background:var(--tint);color:#29458f;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+tr:hover td{background:color-mix(in srgb,var(--tint) 62%,transparent)}
+.tablewrap{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:11px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px}
+.kpi div{background:linear-gradient(145deg,#f5f8ff,#eaf0ff);border:1px solid #d1ddff;border-radius:14px;padding:14px}
+.kpi small{display:block;color:#53668b;font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+.kpi b{display:block;color:#263e85;font-size:22px;margin-top:3px}
+canvas{width:100%;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
 .legend i{display:inline-block;width:20px;height:4px;margin-right:6px;vertical-align:middle;border-radius:2px}
-.muted{color:#475569;font-size:14px}
-.err{color:#b91c1c;font-size:14px;margin-top:10px;white-space:pre-wrap}
-.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:bold;border:1px solid}
-.pill.anomaly{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
-.pill.normal{background:#dcfce7;color:#15803d;border-color:#86efac}
-.pill.drift{background:#fef3c7;color:#b45309;border-color:#fcd34d}
-code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 5px;font-family:Consolas,monospace;font-size:13.5px}
+.muted{color:var(--muted);font-size:13px}
+.err{color:#b42335;font-size:14px;margin-top:10px;white-space:pre-wrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
+.pill.anomaly{background:#fee7e9;color:#a32132;border-color:#f7b5bc}
+.pill.normal{background:#e2f8ec;color:#176b3b;border-color:#a7e3be}
+.pill.drift{background:#fff4d7;color:#8b5b00;border-color:#f5d486}
+code{background:var(--tint);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-family:Consolas,monospace;font-size:12.5px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.chip{cursor:pointer;font-size:13.5px;padding:6px 12px;border-radius:999px;border:1px solid #94a3b8;background:#fff;color:#334155}
-.chip.on{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
-.progress{height:18px;border-radius:10px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1}
-.progress .bar{height:100%;width:0;background:linear-gradient(90deg,#2563eb,#0ea5e9);transition:width .25s}
-.trace{margin-top:10px;max-height:240px;overflow:auto;background:#0f172a;color:#e0f2fe;border-radius:10px;
-padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.chip{cursor:pointer;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid #b8c7df;background:var(--panel);color:var(--ink)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.progress{height:16px;border-radius:999px;background:#e8edf7;overflow:hidden;border:1px solid #d4ddec}
+.progress .bar{height:100%;width:0;background:linear-gradient(90deg,#456eff,#35b8e8);transition:width .25s}
+.trace{margin-top:10px;max-height:220px;overflow:auto;background:#14203b;color:#e3ecff;border-radius:11px;
+padding:10px 12px;font-family:Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre-wrap}
 .trace .ok{color:#86efac}.trace .warn{color:#fde68a}
 .tick{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px}
+.advanced{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.advanced summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:13px}
+body.dark{color-scheme:dark;--page:#101726;--panel:#192438;--ink:#e8efff;--muted:#b1bfd8;--line:#33435e;--tint:#202e48;--accent:#91aaff;--accent-strong:#adc0ff;--shadow:0 12px 32px #0005}
+body.dark .sidebar{background:linear-gradient(155deg,#192438,#182944);border-color:#33435e}
+body.dark .brand h1,body.dark h2{color:#abc0ff}
+body.dark .brand small,body.dark .paper{color:#becbe1}
+body.dark .paper,body.dark .status,body.dark .theme-toggle{background:#202e48;color:#d9e5fb;border-color:#394d70}
+body.dark nav a{color:#dce6fb}
+body.dark nav a .num{background:#2c3d5e;color:#d8e2ff}
+body.dark nav a:hover{background:#293a59;border-color:#405781}
+body.dark nav a.active{background:linear-gradient(100deg,#456eff,#655de5);color:#fff}
+body.dark .status b{color:#adc0ff}
+body.dark .kpi div{background:linear-gradient(145deg,#223451,#202c46);border-color:#394d70}
+body.dark .kpi small,body.dark .kpi b,body.dark th{color:#c6d5ff}
+body.dark .pill.anomaly{background:#482b39;color:#ffb9c1;border-color:#754252}
+body.dark .pill.normal{background:#203e37;color:#9ae2b8;border-color:#346451}
+body.dark .pill.drift{background:#493c24;color:#ffd67d;border-color:#75602f}
+body.dark .err{color:#ffadb6}
+@media(max-width:900px){.sidebar{width:245px;flex-basis:245px}.grid3{grid-template-columns:repeat(2,1fr)}main{padding:24px 20px 50px}}
+@media(max-width:650px){.layout{display:block}.sidebar{position:relative;width:auto;height:auto;max-height:none;border-right:0;border-bottom:1px solid #cfdbef;padding:16px}
+nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.paper{display:none}.theme-toggle{width:auto}.status{margin-top:8px}main{padding:22px 14px 40px}
+.grid2,.grid3{grid-template-columns:1fr}.card{padding:16px}.kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head>
 <body><div class="layout">
 <aside class="sidebar">
   <div class="brand"><div class="logo">Σ</div><div><h1>DyMETER</h1><small>online anomaly detection lab</small></div></div>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">◐ Switch to dark theme</button>
   <div class="paper">Faithful Java port of <b>Catching Every Ripple: Enhanced Anomaly Awareness via Dynamic
     Concept Adaptation</b> (IEEE TPAMI). SCD Eq.3–4 · IEC Eq.2,5–8 · DSD Eq.9–14 · DTO Eq.15–20 · Algorithm 1 &amp; 2.</div>
   <nav id="nav">
@@ -83,9 +109,8 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
     <a href="#/visuals"><span class="num">4</span> Visualisations</a>
     <a href="#/drift"><span class="num">5</span> Concept drift timeline</a>
     <a href="#/rows"><span class="num">6</span> Row diagnostics</a>
-    <a href="#/ablation"><span class="num">7</span> Ablation lab</a>
-    <a href="#/report"><span class="num">8</span> Report &amp; downloads</a>
-    <a href="#/about"><span class="num">9</span> Paper ↔ code map</a>
+    <a href="#/report"><span class="num">7</span> Report &amp; downloads</a>
+    <a href="#/about"><span class="num">8</span> Paper &amp; method</a>
   </nav>
   <div class="status" id="status"><b>Idle.</b> Choose a CSV on page 1, configure the run on page 2.</div>
 </aside>
@@ -95,7 +120,8 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
     <h2>1 · Upload the stream</h2>
     <p class="lead">Any numeric CSV works. A column named <code>label</code>, <code>class</code>,
       <code>target</code> or <code>anomaly</code> is detected automatically, removed from the features and used
-      <em>only</em> for AUCROC/AUCPR scoring - DyMETER trains unsupervised.</p>
+      <em>only</em> for evaluation - DyMETER trains unsupervised. AUCROC/AUCPR are scored when both normal
+      and anomalous labels are present in the evaluated rows.</p>
     <div class="card">
       <h3>Choose a CSV file</h3>
       <input type="file" id="file" accept=".csv,text/csv">
@@ -122,20 +148,23 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
 
   <section class="page" id="page-pipeline">
     <h2>2 · Configure and run the pipeline</h2>
-    <p class="lead">Defaults are the paper's settings (Adam lr 1e-2 decayed ×0.96, minibatch 64, |W<sub>N</sub>| = |W<sub>C</sub>| = 64,
-      γ = 2, λ = 0.6, κ = 0.8, τ = 0.05, historical ratio 20 %).</p>
-    <div class="card">
-      <h3>Run configuration</h3>
-      <div class="grid3">
-        <div><label>Variant</label><input type="text" value="DyMETER (full model)" disabled title="Ablation lab removed: every run uses the full DyMETER model"></div>
-        <div><label for="epochs">Adam epochs</label><select id="epochs">
-          <option value="400">400 · fast</option><option value="900" selected>900 · balanced</option>
-          <option value="2000">2000 · paper setting</option></select></div>
-        <div><label for="batch">Minibatch size</label><input type="number" id="batch" value="64" min="8" step="8"></div>
-        <div><label for="drift">Stream generator</label><select id="drift">
-          <option value="none">none · use the file order</option><option value="abrupt">abrupt drift</option>
-          <option value="gradual">gradual / incremental</option><option value="recurrent">recurrent</option>
-          <option value="mixed">mixed (abrupt + gradual + recurrent)</option></select></div>
+    <p class="lead">Upload a stream, choose a run speed, and start. The recommended settings are applied automatically.</p>
+      <div class="card">
+        <h3>Run configuration</h3>
+        <div class="grid2">
+          <div><label for="epochs">Run speed</label><select id="epochs">
+            <option value="400">Quick</option><option value="900" selected>Recommended</option>
+            <option value="2000">More thorough</option></select></div>
+          <div class="muted" style="align-self:end;padding-bottom:10px">You can run with the recommended settings as-is.</div>
+        </div>
+        <details class="advanced">
+          <summary>Advanced options</summary>
+          <div class="grid3" style="margin-top:10px">
+          <div><label for="batch">Minibatch size</label><input type="number" id="batch" value="64" min="8" step="8"></div>
+          <div><label for="drift">Stream scenario</label><select id="drift">
+            <option value="none">none · use the file order</option><option value="abrupt">abrupt drift</option>
+            <option value="gradual">gradual / incremental</option><option value="recurrent">recurrent</option>
+            <option value="mixed">mixed (abrupt + gradual + recurrent)</option></select></div>
         <div><label for="concepts">Generator concepts</label><input type="number" id="concepts" value="4" min="2" max="8"></div>
         <div><label for="magnitude">Concept offset</label><input type="number" id="magnitude" value="2.0" step="0.5"></div>
         <div><label for="tau">τ · quantile</label><input type="number" id="tau" value="0.05" step="0.01"></div>
@@ -144,7 +173,8 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
         <div><label for="mue">μ<sub>e</sub> (blank = derived)</label><input type="text" id="mue" placeholder="derived from training"></div>
         <div><label for="noise">Training noise</label><input type="number" id="noise" value="0" step="0.05"></div>
         <div><label for="seed">Seed</label><input type="number" id="seed" value="42"></div>
-      </div>
+        </div>
+      </details>
       <div class="row">
         <button id="run">▶ Run DyMETER on this stream</button>
         <button class="alt" id="toUpload">← Change file</button>
@@ -154,14 +184,15 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
     </div>
     <div class="card">
       <h3>Live progress</h3>
-      <div class="progress"><div class="bar" id="progressBar"></div></div>
+      <div class="progress" role="progressbar" aria-label="Pipeline progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="bar" id="progressBar"></div></div>
       <div class="row" style="margin-top:8px">
-        <span id="progressStage" class="muted">Idle — press ‛Run DyMETER on this stream”.</span>
+        <span id="progressStage" class="muted">Idle - press Run DyMETER to start.</span>
       </div>
       <div class="row" style="margin-top:0">
         <span class="muted" id="progressDetail"></span>
       </div>
-      <div class="trace" id="epochTrace">backend console idle — every Adam epoch of every training stage for every dataset is streamed here while the pipeline runs.</div>
+      <div class="trace" id="epochTrace">Run activity will appear here as training and streaming progress are reported.</div>
     </div>
     <div class="card">
       <h3>Pipeline trace (Algorithm 1 then Algorithm 2)</h3>
@@ -176,13 +207,13 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
 
   <section class="page" id="page-metrics">
     <h2>3 · Scores and metrics</h2>
-    <p class="lead">Everything the run produced for the streamed part of the file. AUCROC/AUCPR appear when the CSV carries a label column.</p>
+    <p class="lead">A clear summary of the run. Ranking metrics are calculated only when the scored rows have ground-truth labels from both classes.</p>
     <div class="card"><h3>Key numbers</h3><div class="kpi" id="kpis"><span class="muted">Run the pipeline first.</span></div></div>
     <div class="grid2">
       <div class="card"><h3>Evaluation metrics</h3><div class="tablewrap" style="max-height:none">
         <table><tbody id="metricTable"><tr><td class="muted">No run yet.</td></tr></tbody></table></div></div>
-      <div class="card"><h3>Learned quantities</h3><div class="tablewrap" style="max-height:none">
-        <table><tbody id="learnedTable"><tr><td class="muted">No run yet.</td></tr></tbody></table></div></div>
+      <div class="card"><h3>Run summary</h3><div class="tablewrap" style="max-height:none">
+        <table><tbody id="summaryTable"><tr><td class="muted">No run yet.</td></tr></tbody></table></div></div>
     </div>
     <div class="card"><h3>Anomaly-score distribution</h3>
       <canvas id="hist" width="1100" height="330"></canvas>
@@ -253,22 +284,8 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
     </div>
   </section>
 
-  <section class="page" id="page-ablation">
-    <h2>7 · Ablation lab</h2>
-    <p class="lead">The 12 variants of the paper's ablation study, run on the same stream and configuration.</p>
-    <div class="card">
-      <div class="row" style="margin-top:0"><button id="ablate">Run all 12 variants</button>
-        <span class="muted" id="ablationInfo">Each variant trains the framework once.</span></div>
-      <div class="err" id="err3"></div>
-      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Variant</th><th>AUCROC</th><th>AUCPR</th>
-        <th>FPR</th><th>Recall</th><th>Concepts</th><th>Resets</th><th>Updates</th><th>Removes / changes</th></tr></thead>
-        <tbody id="ablationTable"><tr><td colspan="9" class="muted">No ablation run yet.</td></tr></tbody></table></div>
-      <div class="row"><button class="alt small" data-csv="ablation" data-name="ablation-study">Download ablation CSV</button></div>
-    </div>
-  </section>
-
   <section class="page" id="page-report">
-    <h2>8 · Report (PDF)</h2>
+    <h2>7 · Report (PDF)</h2>
     <p class="lead">The report is a real PDF file: dataset details, the epochs executed, the timestamp, the metrics,
       the concept-drift events with row numbers and reasons, the configuration and the figures. It is generated and
       <b>downloaded automatically</b> as soon as a run finishes, and can be regenerated at any time.</p>
@@ -284,7 +301,7 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
   </section>
 
   <section class="page" id="page-about">
-    <h2>9 · Paper ↔ code map</h2>
+    <h2>8 · How the method works</h2>
     <p class="lead">Every equation of the paper is implemented in a named method and referenced by comment in the source.</p>
     <div class="card"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>Paper</th><th>Meaning</th>
       <th>Java implementation</th></tr></thead><tbody id="mapTable"></tbody></table></div></div>
@@ -293,10 +310,14 @@ padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const VARIANTS=["DyMETER","DyMETER-S","DyMETER-D","DyMETER-SD","DyMETER-SDT","DyMETER w/o IEC","DyMETER w/o DTO",
-  "DyMETER-ce","DyMETER-pl","DyMETER-re","DyMETER-Q","DyMETER-A"];
-const PAGES=["upload","pipeline","metrics","visuals","drift","rows","ablation","report","about"];
-const state={csv:'',dataset:'',filename:'',payload:null,ablation:null,filter:'all',lastStage:''};
+const PAGES=["upload","pipeline","metrics","visuals","drift","rows","report","about"];
+const state={csv:'',dataset:'',filename:'',payload:null,filter:'all',lastStage:''};
+
+$('themeToggle').addEventListener('click',()=>{
+  const dark=document.body.classList.toggle('dark');
+  $('themeToggle').setAttribute('aria-pressed',String(dark));
+  $('themeToggle').textContent=dark?'☀ Switch to light theme':'◐ Switch to dark theme';
+});
 
 /* ---------------- router: one page per hash, previous pages stay routable ---------------- */
 function route(){
@@ -310,7 +331,6 @@ window.addEventListener('hashchange',route);
 $('nav').addEventListener('click',event=>{const link=event.target.closest('a');if(link)setTimeout(route,0);});
 
 /* ---------------- page 1: upload ---------------- */
-VARIANTS.forEach(v=>$('variant').append(new Option(v,v)));
 $('file').addEventListener('change',async()=>{
   const file=$('file').files[0];if(!file)return;
   state.csv=await file.text();state.dataset='';state.filename=file.name;describeCsv();
@@ -340,7 +360,7 @@ $('toUpload').addEventListener('click',()=>location.hash='#/upload');
 
 function parameters(){
   const mue=$('mue').value.trim();
-  const params=new URLSearchParams({filename:state.filename,variant:$('variant').value,
+  const params=new URLSearchParams({filename:state.filename,variant:'DyMETER',
     epochs:$('epochs').value,batch:$('batch').value,drift:$('drift').value,concepts:$('concepts').value,
     magnitude:$('magnitude').value,tau:$('tau').value,lambda:$('lambda').value,kappa:$('kappa').value,
     noise:$('noise').value,seed:$('seed').value});
@@ -363,6 +383,7 @@ function stopProgress(){
 }
 function resetProgressUi(){
   $('progressBar').style.width='0%';
+  $('progressBar').parentElement.setAttribute('aria-valuenow','0');
   $('progressStage').textContent='Starting…';
   $('progressDetail').textContent='the browser polls /api/progress every 250 ms while the server trains and streams';
   $('epochTrace').textContent='backend console starting — the SCD epochs appear first, then IEC, then DSD, then the streamed records.';
@@ -385,11 +406,10 @@ function trace(text,cls){
   box.scrollTop=box.scrollHeight;
 }
 function renderProgress(p){
+  if(!p.running)return;
   const percent=Math.round(100*(p.fraction||0));
   $('progressBar').style.width=percent+'%';
-  if(!p.running){
-    return;
-  }
+  $('progressBar').parentElement.setAttribute('aria-valuenow',String(percent));
   const elapsed=(p.elapsedMillis/1000).toFixed(1)+' s';
   const key=(p.stage||'')+'|'+(p.epoch||0)+'|'+(p.rows||0)+'|'+(p.job||'');
   if(key!==lastTraceKey){
@@ -424,11 +444,13 @@ $('run').addEventListener('click',async()=>{
   $('runInfo').textContent='training + streaming…';
   startProgress();
   const started=Date.now();
+  let succeeded=false;
   try{
     const response=await fetch('/api/run',{method:'POST',body:parameters()});
     const data=await response.json();
     if(!response.ok)throw Error(data.error||'Run failed.');
     state.payload=data;
+    succeeded=true;
     $('done1').textContent='⛓ '+data.config.layers.join(' → ')+' ('+data.config.epochs+' epochs)';
     $('done2').textContent='⛓ μ_e = '+num(data.learned.muE)+' · μ_p = '+num(data.learned.muP);
     $('done3').textContent='⛓ '+data.summary.driftRows+' records escalated to Θ_d';
@@ -449,37 +471,34 @@ $('run').addEventListener('click',async()=>{
     $('status').innerHTML='<b>Run failed.</b> '+failure.message;
   }finally{
     stopProgress();
-    $('progressBar').style.width='100%';
+    if(succeeded){
+      $('progressBar').style.width='100%';
+      $('progressBar').parentElement.setAttribute('aria-valuenow','100');
+    }
     $('run').disabled=false;
   }
 });
 
-function num(v){return v===null||v===undefined?'n/a':(Math.abs(v)>=1000?v.toFixed(0):Number(v).toFixed(4));}
-function pct(v){return v===null||v===undefined?'n/a':(100*v).toFixed(1)+' %';}
+function num(v){return v===null||v===undefined||!Number.isFinite(Number(v))?'Not scored':
+  (Math.abs(v)>=1000?Number(v).toFixed(0):Number(v).toFixed(4));}
+function pct(v){return v===null||v===undefined||!Number.isFinite(Number(v))?'Not scored':(100*Number(v)).toFixed(1)+' %';}
 
 /* ---------------- page 3: metrics ---------------- */
 function renderAll(data){
   const m=data.metrics,s=data.summary,c=data.config,d=data.dataset;
   $('kpis').innerHTML=[
-    card('AUCROC',num(m.aucroc)),card('AUCPR',num(m.aucpr)),card('FPR at μ*',pct(m.fpr)),
-    card('Recall',pct(m.recall)),card('Precision',pct(m.precision)),card('Flagged',m.flagged+' / '+s.rows),
-    card('Concepts',s.driftEpisodes),card('Threshold re-inits',s.thresholdResets),
-    card('Offline updates',s.offlineUpdates),card('Train / infer',(s.trainingMillis/1000).toFixed(1)+' s / '+s.inferenceMillis+' ms')].join('');
-  $('metricTable').innerHTML=[['Dataset',d.filename+' ('+d.rows+' rows × '+d.dimensions+' features'+(d.labelled?', '+d.anomalies+' labelled anomalies':'')+')'],
-    ['Variant',data.variant+' — '+data.description],['Adam epochs',c.epochs],['Minibatch / window',c.batch+' / '+c.window],
-    ['Historical segment',c.historical+' rows (20 %)'],['Streamed records',s.rows],
-    ['Layer sizes',c.layers.join(' → ')],['Latent width',c.latentWidth],['τ / λ / κ / γ',c.tau+' / '+c.lambda+' / '+c.kappa+' / '+c.gamma],
-    ['AUCROC',num(m.aucroc)],['AUCPR',num(m.aucpr)],['False-positive rate',pct(m.fpr)],['Recall',pct(m.recall)],
-    ['Precision',pct(m.precision)],['Labelled positives / negatives',m.positives+' / '+m.negatives],
-    ['Drift rows (escalated to DSD)',s.driftRows],['Concept episodes',s.driftEpisodes],
-    ['Threshold re-initialisations',s.thresholdResets],['Offline updates (Eq. 20)',s.offlineUpdates],
-    ['Training / inference time',(s.trainingMillis/1000).toFixed(2)+' s / '+(s.inferenceMillis/1000).toFixed(3)+' s']]
+    card('AUCROC',num(m.aucroc)),card('AUCPR',num(m.aucpr)),card('Detected anomalies',m.flagged+' / '+s.rows),
+    card('Rows evaluated',s.rows),card('Concept changes',s.driftEpisodes),
+    card('Run time',(s.trainingMillis/1000).toFixed(1)+' s')].join('');
+  $('metricTable').innerHTML=[['Dataset',d.filename],['Rows evaluated',s.rows],
+    ['AUCROC',num(m.aucroc)],['AUCPR',num(m.aucpr)],['False-positive rate',pct(m.fpr)],
+    ['Recall',pct(m.recall)],['Precision',pct(m.precision)],['Detected anomalies',m.flagged+' / '+s.rows],
+    ['Ground-truth labels',m.labelled?m.positives+' anomalous · '+m.negatives+' normal':'Not included'],
+    ['Metric status',m.status]]
     .map(([k,v])=>'<tr><th style="width:45%">'+k+'</th><td>'+v+'</td></tr>').join('');
-  $('learnedTable').innerHTML=[['μ_e · concept uncertainty threshold',num(data.learned.muE)],
-    ['μ_p · pseudo-labelling threshold',num(data.learned.muP)],['μ_t · max training uncertainty',num(data.learned.muT)],
-    ['Reference error r_e (adapted by EMA)',num(data.curves.error.length?Math.max(...data.curves.error):null)],
-    ['Concept uncertainty above μ_e',pct(data.curves.uncertainty.filter(v=>v>data.learned.muE).length/Math.max(1,s.rows))],
-    ['Mean reconstruction error',num(avg(data.curves.error))],['Mean anomaly score',num(avg(data.curves.score))]]
+  $('summaryTable').innerHTML=[['Run speed',c.epochs===400?'Quick':c.epochs===2000?'More thorough':'Recommended'],
+    ['Average anomaly score',num(avg(data.curves.score))],['Average decision threshold',num(avg(data.curves.threshold))],
+    ['Concept changes detected',s.driftEpisodes],['Time to complete',(s.trainingMillis/1000).toFixed(1)+' s']]
     .map(([k,v])=>'<tr><th style="width:45%">'+k+'</th><td>'+v+'</td></tr>').join('');
   drawHistogram(data);drawChart1(data);drawChart2(data);drawChart3(data);
   renderDrift(data);renderRows(data);renderMap();
@@ -630,27 +649,7 @@ document.querySelectorAll('.chip').forEach(chip=>chip.addEventListener('click',(
   if(state.payload)renderRows(state.payload);
 }));
 
-/* ---------------- page 7: ablation lab ---------------- */
-$('ablate').addEventListener('click',async()=>{
-  if(!state.csv){$('err3').textContent='Choose a CSV first.';return;}
-  $('err3').textContent='';$('ablate').disabled=true;$('ablationInfo').textContent='running 12 variants…';
-  $('progressBar').style.width='0%';
-  $('progressStage').textContent='Starting the ablation sweep…';
-  startProgress();
-  try{
-    const response=await fetch('/api/ablation',{method:'POST',body:parameters()});
-    const data=await response.json();
-    if(!response.ok)throw Error(data.error||'Ablation failed.');
-    state.ablation=data.rows;
-    $('ablationTable').innerHTML=data.rows.map(row=>'<tr><td><b>'+row.name+'</b></td><td>'+num(row.aucroc)+'</td>'+
-      '<td>'+num(row.aucpr)+'</td><td>'+pct(row.fpr)+'</td><td>'+pct(row.recall)+'</td><td>'+row.driftEpisodes+'</td>'+
-      '<td>'+row.thresholdResets+'</td><td>'+row.offlineUpdates+'</td><td style="white-space:normal">'+row.description+'</td></tr>').join('');
-    $('ablationInfo').textContent='done · '+data.rows.length+' variants on '+data.data.filename;
-  }catch(failure){$('err3').textContent=failure.message;}
-  finally{stopProgress();$('progressBar').style.width='100%';$('ablate').disabled=false;}
-});
-
-/* ---------------- page 8: report + downloads ---------------- */
+/* ---------------- page 7: report + downloads ---------------- */
 function stamp(date){
   const p=n=>String(n).padStart(2,'0');
   return date.getFullYear()+'-'+p(date.getMonth()+1)+'-'+p(date.getDate())+' '+p(date.getHours())+':'+p(date.getMinutes())+':'+p(date.getSeconds());
@@ -659,36 +658,7 @@ function fileStamp(date){
   const p=n=>String(n).padStart(2,'0');
   return date.getFullYear()+p(date.getMonth()+1)+p(date.getDate())+'-'+p(date.getHours())+p(date.getMinutes())+p(date.getSeconds());
 }
-document.querySelectorAll('[data-png]').forEach(button=>button.addEventListener('click',()=>{
-  const canvas=$(button.dataset.png);
-  const anchor=document.createElement('a');
-  anchor.href=canvas.toDataURL('image/png');anchor.download='DyMETER-'+button.dataset.name+'.png';
-  document.body.appendChild(anchor);anchor.click();anchor.remove();
-}));
-document.querySelectorAll('[data-csv]').forEach(button=>button.addEventListener('click',()=>{
-  const data=state.payload;if(!data)return;
-  let csv='';
-  if(button.dataset.csv==='rows'){
-    csv='row,concept,uncertainty,error,score,threshold,decision,drift,threshold_reset,labelled_anomaly\n';
-    data.results.forEach((r,i)=>csv+=[r.row,r.concept,r.uncertainty,r.error,r.score,r.threshold,r.anomaly?1:0,
-      data.curves.drift[i]?1:0,data.curves.reset[i]?1:0,data.curves.label?(data.curves.label[i]?1:0):''].join(',')+'\n');
-  }else if(button.dataset.csv==='curves'){
-    csv='record,score,threshold,uncertainty,error,concept,decision\n';
-    data.curves.score.forEach((value,i)=>csv+=[i+1,value,data.curves.threshold[i],data.curves.uncertainty[i],
-      data.curves.error[i],data.curves.concept[i],data.curves.decision[i]?1:0].join(',')+'\n');
-  }else if(button.dataset.csv==='drift'){
-    csv='row,concept,uncertainty,error,threshold,flagged,reason\n';
-    (data.driftEvents||[]).forEach(e=>csv+=[e.row,e.concept,e.uncertainty,e.error,e.threshold,e.anomaly?1:0,
-      '"'+e.reason.replace(/"/g,"'")+'"'].join(',')+'\n');
-  }else if(button.dataset.csv==='ablation'){
-    csv='variant,aucroc,aucpr,fpr,recall,concepts,threshold_resets,offline_updates,description\n';
-    (state.ablation||[]).forEach(r=>csv+=[r.name,r.aucroc,r.aucpr,r.fpr,r.recall,r.driftEpisodes,r.thresholdResets,
-      r.offlineUpdates,'"'+r.description+'"'].join(',')+'\n');
-  }
-  if(csv)download('DyMETER-'+button.dataset.name+'-'+fileStamp(new Date())+'.csv',csv,'text/csv;charset=utf-8');
-}));
-
-/* ---------------- page 9: paper and code map ---------------- */
+/* ---------------- page 8: paper and code map ---------------- */
 const MAP=[['Eq. (2)','Dirichlet evidence α = g(f(x))','EvidentialController.concentration'],
   ['Eq. (3)','x → E_s(x) → z → D_s(z) → y','AutoEncoder.forward'],
   ['Eq. (4)','L_SCD = Σ(x_i − y_i)² / n','AutoEncoder.reconstructionLoss / backward'],
@@ -749,7 +719,8 @@ function reportItems(){
   push('Training time / inference time: '+(s.trainingMillis/1000).toFixed(2)+' s / '+(s.inferenceMillis/1000).toFixed(3)+' s');
   push('Stream generator: '+(state.driftMode||'none')+'    Seed: '+$('seed').value);
   push('3. Scores and metrics on this dataset','h2');
-  push('AUCROC: '+(m.aucroc===null?'n/a (unlabelled)':num(m.aucroc))+'    AUCPR: '+(m.aucpr===null?'n/a (unlabelled)':num(m.aucpr)));
+  push('AUCROC: '+num(m.aucroc)+'    AUCPR: '+num(m.aucpr));
+  push('Metric status: '+m.status);
   push('False-positive rate at mu*: '+pct(m.fpr)+'    Recall (true-positive rate): '+pct(m.recall));
   push('Precision: '+pct(m.precision)+'    Flagged records: '+m.flagged+' of '+s.rows);
   push('Labelled positives / negatives: '+m.positives+' / '+m.negatives);
@@ -776,12 +747,7 @@ function reportItems(){
     push('Concept '+id+': rows '+idx.length+', flagged '+flagged+', mean U_ctr '+num(avg(idx.map(i=>data.curves.uncertainty[i])))+
       ', mean R_e '+num(avg(idx.map(i=>data.curves.error[i])))+', mean mu* '+num(avg(idx.map(i=>data.curves.threshold[i]))));
   });
-  if(state.ablation&&state.ablation.length){
-    push('6. Ablation study (same stream and configuration)','h2');
-    state.ablation.forEach(r=>push(r.name+': AUCROC '+num(r.aucroc)+', AUCPR '+num(r.aucpr)+', FPR '+pct(r.fpr)+
-      ', recall '+pct(r.recall)+', concepts '+r.driftEpisodes+' - '+r.description));
-  }
-  push('7. Method recap','h2');
+  push('6. Method recap','h2');
   push('SCD (Eq. 3-4): symmetric DNN autoencoder trained with Adam on the historical segment.');
   push('IEC (Eq. 2, 5-8): two-layer ReLU evidential classifier, focal evidential loss on pseudo-labels; U_ctr is the Dirichlet mutual information.');
   push('DSD (Eq. 9-14): hypernetwork generating instance-aware parameter shifts Theta_d = Theta_s + Delta_Theta_d.');
@@ -950,10 +916,6 @@ document.querySelectorAll('[data-csv]').forEach(button=>button.addEventListener(
     csv='row,concept,uncertainty,error,threshold,flagged,reason\n';
     (data.driftEvents||[]).forEach(event=>csv+=[event.row,event.concept,event.uncertainty,event.error,event.threshold,
       event.anomaly?1:0,'"'+event.reason.replace(/"/g,"'")+'"'].join(',')+'\n');
-  }else if(button.dataset.csv==='ablation'){
-    csv='variant,aucroc,aucpr,fpr,recall,concepts,threshold_resets,offline_updates,description\n';
-    (state.ablation||[]).forEach(row=>csv+=[row.name,row.aucroc,row.aucpr,row.fpr,row.recall,row.driftEpisodes,
-      row.thresholdResets,row.offlineUpdates,'"'+row.description+'"'].join(',')+'\n');
   }
   if(csv)download('DyMETER-'+button.dataset.name+'-'+fileStamp(new Date())+'.csv',csv,'text/csv;charset=utf-8');
 }));

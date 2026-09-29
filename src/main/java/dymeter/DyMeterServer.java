@@ -2,7 +2,6 @@ package dymeter;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -82,9 +81,11 @@ public final class DyMeterServer {
             Ablation.Outcome outcome;
             try{
                 outcome=Ablation.run(table,base,variant,seed(parameters));
-            }finally{
-                RunProgress.finish();
+            }catch(RuntimeException failure){
+                RunProgress.fail(failure.getMessage());
+                throw failure;
             }
+            RunProgress.finish();
             respond(exchange,200,result(table,base,variant,outcome,filename));
         }catch(Exception failure){
             respond(exchange,400,error(failure.getMessage()));
@@ -116,9 +117,11 @@ public final class DyMeterServer {
                             number(outcome.summary.falsePositiveRate),number(outcome.summary.recall),outcome.driftEpisodes,
                             outcome.thresholdResets,outcome.offlineUpdates));
                 }
-            }finally{
-                RunProgress.finish();
+            }catch(RuntimeException failure){
+                RunProgress.fail(failure.getMessage());
+                throw failure;
             }
+            RunProgress.finish();
             json.append("]}");
             respond(exchange,200,json.toString());
         }catch(Exception failure){
@@ -240,11 +243,63 @@ public final class DyMeterServer {
             json.append(widths[i]);
         }
         json.append("]}");
-        json.append(String.format(Locale.US,",\"metrics\":{\"aucroc\":%s,\"aucpr\":%s,\"fpr\":%s,\"recall\":%s,"
-                        + "\"precision\":%s,\"flagged\":%d,\"positives\":%d,\"negatives\":%d}",
-                number(outcome.aucRoc()),number(outcome.aucPr()),number(outcome.summary.falsePositiveRate),
-                number(outcome.summary.recall),number(outcome.summary.precision),outcome.summary.flagged,
-                outcome.summary.positives,outcome.summary.negatives));
+        Metrics.Summary metrics = outcome.summary;
+
+        json.append(String.format(
+                Locale.US,
+
+                ",\"metrics\":{" +
+
+                        "\"labelled\":%b," +
+                        "\"aucAvailable\":%b," +
+
+                        "\"aucroc\":%s," +
+                        "\"aucpr\":%s," +
+
+                        "\"fpr\":%s," +
+                        "\"fnr\":%s," +
+
+                        "\"precision\":%s," +
+                        "\"recall\":%s," +
+                        "\"f1\":%s," +
+
+                        "\"flagged\":%d," +
+                        "\"positives\":%d," +
+                        "\"negatives\":%d," +
+
+                        "\"meanScore\":%s," +
+                        "\"stdScore\":%s," +
+                        "\"meanThreshold\":%s," +
+                        "\"flaggedRate\":%s," +
+
+                        "\"status\":%s" +
+
+                        "}",
+
+                metrics.labelled,
+                metrics.aucAvailable,
+
+                number(metrics.aucRoc),
+                number(metrics.aucPr),
+
+                number(metrics.falsePositiveRate),
+                number(metrics.falseNegativeRate),
+
+                number(metrics.precision),
+                number(metrics.recall),
+                number(metrics.f1),
+
+                metrics.flagged,
+                metrics.positives,
+                metrics.negatives,
+
+                number(metrics.meanScore),
+                number(metrics.stdScore),
+                number(metrics.meanThreshold),
+                number(metrics.flaggedRate),
+
+                quote(metrics.metricStatus)
+        ));
         json.append(String.format(Locale.US,",\"learned\":{\"muE\":%s,\"muP\":%s,\"muT\":%s}",
                 number(outcome.muE),number(outcome.muP),number(outcome.muT)));
         json.append(",\"driftEvents\":[");

@@ -21,6 +21,7 @@ public final class DyMeterSelfTest {
         equationChecks();
         metricChecks();
         pipelineChecks();
+        progressChecks();
         System.out.println();
         System.out.println("passed "+passed+", failed "+failed);
         if(failed>0)System.exit(1);
@@ -224,6 +225,18 @@ public final class DyMeterSelfTest {
         Metrics.Summary summary=Metrics.summarise(labels,new double[]{0.9,0.8,0.2,0.1},new boolean[]{true,true,false,true});
         checkClose("FPR of one false positive among two normals",0.5,summary.falsePositiveRate,1e-12);
         checkClose("Recall of two detected anomalies",1.0,summary.recall,1e-12);
+        Metrics.Summary unlabelled=Metrics.summarise(null,new double[]{0.4,0.2},new boolean[]{false,true});
+        check("Unlabelled streams keep score summaries without inventing ranking metrics",
+                !unlabelled.labelled&&!unlabelled.aucAvailable&&Double.isNaN(unlabelled.aucRoc)
+                        &&Double.isNaN(unlabelled.aucPr)&&Double.isFinite(unlabelled.meanScore),
+                unlabelled.metricStatus);
+        Metrics.Summary singleClass=Metrics.summarise(new boolean[]{false,false},new double[]{0.4,0.2},
+                new boolean[]{false,true});
+        check("Ranking metrics are explicitly unavailable when scored rows contain one class",
+                !singleClass.aucAvailable&&Double.isNaN(singleClass.aucRoc)&&Double.isNaN(singleClass.aucPr),
+                singleClass.metricStatus);
+        check("Unavailable numeric metrics are labelled clearly instead of N/A",
+                "Not scored".equals(Metrics.format(Double.NaN)),"");
     }
 
     private static void pipelineChecks(){
@@ -233,6 +246,25 @@ public final class DyMeterSelfTest {
         check("CSV parsing excludes the label column from the features",
                 parsed.dimensions()==2&&parsed.labelled()&&parsed.labels[1]&&!parsed.labels[0],
                 parsed.dimensions()+" feature columns, label column index "+parsed.labelColumn);
+        StreamData.Table textLabels=StreamData.parse("value,is_anomaly\n1,normal\n2,attack\n");
+        check("CSV parsing recognizes common text anomaly labels",
+                textLabels.labelled()&&!textLabels.labels[0]&&textLabels.labels[1],"normal vs attack");
+        boolean rejectedMissingLabel=false;
+        try{
+            StreamData.parse("value,label\n1,normal\n2,\n");
+        }catch(IllegalArgumentException invalidCsv){
+            rejectedMissingLabel=invalidCsv.getMessage().contains("label");
+        }
+        check("CSV parsing reports missing ground-truth labels rather than counting them as normal",
+                rejectedMissingLabel,"");
+        boolean rejectedNonFiniteLabel=false;
+        try{
+            StreamData.parse("value,label\n1,NaN\n2,1\n");
+        }catch(IllegalArgumentException invalidCsv){
+            rejectedNonFiniteLabel=invalidCsv.getMessage().contains("finite");
+        }
+        check("CSV parsing rejects non-finite ground-truth labels",
+                rejectedNonFiniteLabel,"");
 
         StreamData.Table stream=StreamGenerator.synthetic(900,4,3,0.05,6.0,3.0,true,42);
         StreamData.standardise(stream,180);
@@ -285,5 +317,28 @@ public final class DyMeterSelfTest {
         check("mu_e is learned inside the paper's search range [0.005, 0.4]",
                 engine.muE()>=0.005&&engine.muE()<=0.4,String.format(java.util.Locale.US,"mu_e = %.6f",engine.muE()));
         engine.shutdown();
+    }
+
+    private static void progressChecks(){
+        System.out.println();
+        System.out.println("5. Live progress reporting");
+        RunProgress.begin("self-test.csv","DyMETER");
+        RunProgress.stage(1,"SCD training","test stage",100);
+        RunProgress.epoch(50);
+        String training=RunProgress.toJson();
+        check("The progress API reports matching training stage and fraction",
+                training.contains("\"stage\":\"SCD training\"")
+                        &&training.contains("\"epoch\":50")
+                        &&training.contains("\"fraction\":0.125000"),
+                training);
+        RunProgress.stream(5,20);
+        String streaming=RunProgress.toJson();
+        check("The progress API advances through the streamed records",
+                streaming.contains("\"stage\":\"streaming\"")
+                        &&streaming.contains("\"rows\":5")
+                        &&streaming.contains("\"totalRows\":20")
+                        &&streaming.contains("\"fraction\":0.812500"),
+                streaming);
+        RunProgress.finish();
     }
 }

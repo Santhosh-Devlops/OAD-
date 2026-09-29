@@ -15,15 +15,16 @@ import java.util.Locale;
  * compute AUCROC/AUCPR and so that the DyMETER-pl ablation can inject 1% of labelled anomalies.
  */
 final class StreamData {
-    private static final String[] LABEL_NAMES={"label","class","target","anomaly","is_anomaly","attack","outcome","ground_truth","y"};
-    private static final String[] ANOMALY_VALUES={"b","anomaly","attack","fraud","yes","true","malicious","positive"};
+    private static final String[] LABEL_NAMES={"label","class","target","anomaly","is_anomaly","is_outlier","outlier",
+            "anomaly_label","attack","attack_label","outcome","ground_truth","groundtruth","y","y_true"};
+    private static final String[] ANOMALY_VALUES={"abnormal","anomaly","anomalous","attack","fraud","fraudulent","yes",
+            "true","malicious","positive","outlier","outliers","intrusion","infected","malware"};
 
     static final class Table {
         final String[] header;
         final int labelColumn;
         final List<double[]> features;
         final boolean[] labels;
-        final boolean inferredLabels;
         double[] mean;
         double[] deviation;
         Table(String[] header,int labelColumn,List<double[]> features,boolean[] labels){
@@ -55,6 +56,8 @@ final class StreamData {
             for(String candidate:LABEL_NAMES)if(name.equals(candidate)){labelColumn=j;break;}
             if(labelColumn>=0)break;
         }
+        if(header.length-(labelColumn>=0?1:0)<1)
+            throw new IllegalArgumentException("The CSV must contain at least one numeric feature column.");
         List<double[]> features=new ArrayList<>();
         List<Boolean> labels=new ArrayList<>();
         for(int i=firstRow+1;i<lines.length;i++){
@@ -65,7 +68,12 @@ final class StreamData {
             double[] x=new double[header.length-(labelColumn>=0?1:0)];
             int index=0;
             for(int j=0;j<cells.length;j++){
-                if(j==labelColumn){labels.add(isAnomaly(cells[j]));continue;}
+                if(j==labelColumn){
+                    if(cells[j].isBlank())
+                        throw new IllegalArgumentException("The label in CSV row "+(i+1)+" is empty; fill it or remove the label column.");
+                    labels.add(isAnomaly(cells[j]));
+                    continue;
+                }
                 String cell=cells[j].trim();
                 double value;
                 try{
@@ -144,11 +152,18 @@ final class StreamData {
 
     /** Non-zero numeric labels and the usual anomaly keywords count as anomalous. */
     static boolean isAnomaly(String cell){
-        String value=clean(cell);
-        if(value.isEmpty())return false;
+        String raw=cell.trim().replaceAll("[\"']","");
+        if(raw.isEmpty())return false;
+        if(raw.equalsIgnoreCase("nan")||raw.equalsIgnoreCase("infinity")
+                ||raw.equalsIgnoreCase("+infinity")||raw.equalsIgnoreCase("-infinity"))
+            throw new IllegalArgumentException("Ground-truth labels must be finite numbers or recognized class names.");
         try{
-            return Double.parseDouble(value)!=0;
+            double numeric=Double.parseDouble(raw);
+            if(!Double.isFinite(numeric))
+                throw new IllegalArgumentException("Ground-truth labels must be finite numbers or recognized class names.");
+            return numeric!=0;
         }catch(NumberFormatException failure){
+            String value=raw.toLowerCase(Locale.ROOT);
             for(String candidate:ANOMALY_VALUES)if(value.equals(candidate))return true;
             return false;
         }

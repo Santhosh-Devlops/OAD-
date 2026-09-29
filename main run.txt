@@ -1,0 +1,7 @@
+New-Item -ItemType Directory -Force out | Out-Null
+javac -d out src/main/java/dymeter/*.java
+java -cp out dymeter.DyMeterSelfTest
+java --add-modules jdk.httpserver -cp out dymeter.DyMeterServer
+
+
+localhost:8080

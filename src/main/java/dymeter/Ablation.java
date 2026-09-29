@@ -149,9 +149,12 @@ final class Ablation {
         }
         long finished=System.nanoTime();
         engine.shutdown();
-        Metrics.Summary summary=table.labelled()
-                ? Metrics.summarise(labels,scores,decisions)
-                : new Metrics.Summary(streamRows,0,0,0,Double.NaN,Double.NaN,Double.NaN,Double.NaN,Double.NaN,Double.NaN,Double.NaN);
+        Metrics.Summary summary = Metrics.summarise(
+                table.labelled() ? labels : null,
+                scores,
+                decisions,
+                thresholds
+        );
         return new Outcome(variant.name,summary,streamRows,driftRows,engine.conceptCount(),resetCount,updateCount,
                 (trained-started)/1000000,(finished-trained)/1000000,scores,uncertainties,thresholds,errors,
                 labels,decisions,driftFlags,resets,updates,concepts,engine.muE(),engine.muT(),engine.muP());
