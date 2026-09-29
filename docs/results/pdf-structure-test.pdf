@@ -1,0 +1,206 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 4957 >>
+stream
+BT /F2 16 Tf 48 765.00 Td (DyMETER run report) Tj ET
+BT /F1 10 Tf 48 752.00 Td (Title: DyMETER streaming anomaly detection report - sample_stream.csv) Tj ET
+BT /F1 10 Tf 48 739.00 Td (Generated: 2026-09-29 12:00:00) Tj ET
+BT /F2 12 Tf 48 722.00 Td (1. Dataset) Tj ET
+BT /F1 10 Tf 48 709.00 Td (File: sample_stream.csv Data rows: 1500 Feature columns: 8) Tj ET
+BT /F2 12 Tf 48 692.00 Td (2. Concept drift events \(row numbers and reasons\)) Tj ET
+BT /F1 10 Tf 48 679.00 Td (Row 82 - concept 2 \(U_ctr = 0.0321, R_e = 0.1140, mu* at onset = 0.4011, flagged: normal\)) Tj ET
+BT /F1 10 Tf 48 666.00 Td (Reason: Concept 2 declared at stream row 82: the smoothed concept uncertainty stayed above mu_e for) Tj ET
+BT /F1 10 Tf 48 653.00 Td (5 consecutive instances \(Algorithm 2, line 3\) - parentheses \( \) and backslash \\ must be) Tj ET
+BT /F1 10 Tf 48 640.00 Td (escaped.) Tj ET
+BT /F1 10 Tf 48 627.00 Td (Filler line 0 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 614.00 Td (Filler line 1 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 601.00 Td (Filler line 2 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 588.00 Td (Filler line 3 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 575.00 Td (Filler line 4 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 562.00 Td (Filler line 5 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 549.00 Td (Filler line 6 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 536.00 Td (Filler line 7 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 523.00 Td (Filler line 8 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 510.00 Td (Filler line 9 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 497.00 Td (Filler line 10 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 484.00 Td (Filler line 11 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 471.00 Td (Filler line 12 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 458.00 Td (Filler line 13 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 445.00 Td (Filler line 14 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 432.00 Td (Filler line 15 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 419.00 Td (Filler line 16 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 406.00 Td (Filler line 17 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 393.00 Td (Filler line 18 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 380.00 Td (Filler line 19 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 367.00 Td (Filler line 20 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 354.00 Td (Filler line 21 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 341.00 Td (Filler line 22 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 328.00 Td (Filler line 23 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 315.00 Td (Filler line 24 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 302.00 Td (Filler line 25 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 289.00 Td (Filler line 26 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 276.00 Td (Filler line 27 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 263.00 Td (Filler line 28 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 250.00 Td (Filler line 29 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 237.00 Td (Filler line 30 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 224.00 Td (Filler line 31 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 211.00 Td (Filler line 32 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 198.00 Td (Filler line 33 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 185.00 Td (Filler line 34 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 172.00 Td (Filler line 35 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 159.00 Td (Filler line 36 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 146.00 Td (Filler line 37 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 133.00 Td (Filler line 38 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 120.00 Td (Filler line 39 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 107.00 Td (Filler line 40 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 94.00 Td (Filler line 41 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 81.00 Td (Filler line 42 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 68.00 Td (Filler line 43 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 55.00 Td (Filler line 44 to force pagination across several pages.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 5093 >>
+stream
+BT /F1 10 Tf 48 773.00 Td (Filler line 45 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 760.00 Td (Filler line 46 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 747.00 Td (Filler line 47 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 734.00 Td (Filler line 48 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 721.00 Td (Filler line 49 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 708.00 Td (Filler line 50 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 695.00 Td (Filler line 51 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 682.00 Td (Filler line 52 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 669.00 Td (Filler line 53 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 656.00 Td (Filler line 54 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 643.00 Td (Filler line 55 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 630.00 Td (Filler line 56 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 617.00 Td (Filler line 57 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 604.00 Td (Filler line 58 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 591.00 Td (Filler line 59 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 578.00 Td (Filler line 60 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 565.00 Td (Filler line 61 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 552.00 Td (Filler line 62 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 539.00 Td (Filler line 63 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 526.00 Td (Filler line 64 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 513.00 Td (Filler line 65 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 500.00 Td (Filler line 66 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 487.00 Td (Filler line 67 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 474.00 Td (Filler line 68 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 461.00 Td (Filler line 69 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 448.00 Td (Filler line 70 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 435.00 Td (Filler line 71 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 422.00 Td (Filler line 72 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 409.00 Td (Filler line 73 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 396.00 Td (Filler line 74 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 383.00 Td (Filler line 75 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 370.00 Td (Filler line 76 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 357.00 Td (Filler line 77 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 344.00 Td (Filler line 78 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 331.00 Td (Filler line 79 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 318.00 Td (Filler line 80 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 305.00 Td (Filler line 81 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 292.00 Td (Filler line 82 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 279.00 Td (Filler line 83 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 266.00 Td (Filler line 84 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 253.00 Td (Filler line 85 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 240.00 Td (Filler line 86 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 227.00 Td (Filler line 87 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 214.00 Td (Filler line 88 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 201.00 Td (Filler line 89 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 188.00 Td (Filler line 90 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 175.00 Td (Filler line 91 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 162.00 Td (Filler line 92 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 149.00 Td (Filler line 93 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 136.00 Td (Filler line 94 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 123.00 Td (Filler line 95 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 110.00 Td (Filler line 96 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 97.00 Td (Filler line 97 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 84.00 Td (Filler line 98 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 71.00 Td (Filler line 99 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 58.00 Td (Filler line 100 to force pagination across several pages.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 10 0 R >>
+endobj
+10 0 obj
+<< /Length 1748 >>
+stream
+BT /F1 10 Tf 48 773.00 Td (Filler line 101 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 760.00 Td (Filler line 102 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 747.00 Td (Filler line 103 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 734.00 Td (Filler line 104 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 721.00 Td (Filler line 105 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 708.00 Td (Filler line 106 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 695.00 Td (Filler line 107 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 682.00 Td (Filler line 108 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 669.00 Td (Filler line 109 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 656.00 Td (Filler line 110 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 643.00 Td (Filler line 111 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 630.00 Td (Filler line 112 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 617.00 Td (Filler line 113 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 604.00 Td (Filler line 114 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 591.00 Td (Filler line 115 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 578.00 Td (Filler line 116 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 565.00 Td (Filler line 117 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 552.00 Td (Filler line 118 to force pagination across several pages.) Tj ET
+BT /F1 10 Tf 48 539.00 Td (Filler line 119 to force pagination across several pages.) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Im0 13 0 R >> >> /Contents 12 0 R >>
+endobj
+12 0 obj
+<< /Length 122 >>
+stream
+BT /F2 11 Tf 48 770.00 Td (Figure A - anomaly score versus threshold) Tj ET
+q 499.00 0 0 499.00 48.00 259.00 cm /Im0 Do Q
+endstream
+endobj
+13 0 obj
+<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length 160 >>
+stream
+ÿØÿà JFIF      ÿÛ C 		
+ $.' ",#(7),01444'9=82<.342ÿÀ    ÿÄ                 	ÿÄ                 ÿÚ   ? *ŸÿÙ
+endstream
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000140 00000 n 
+0000000239 00000 n 
+0000000337 00000 n 
+0000000473 00000 n 
+0000005481 00000 n 
+0000005617 00000 n 
+0000010761 00000 n 
+0000010898 00000 n 
+0000012698 00000 n 
+0000012863 00000 n 
+0000013036 00000 n 
+trailer
+<< /Size 14 /Root 1 0 R >>
+startxref
+13360
+%%EOF

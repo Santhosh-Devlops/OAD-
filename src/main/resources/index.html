@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DyMETER · Online anomaly detection lab</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#f7f9fc;color:#111827;font-family:"Times New Roman",Times,Georgia,serif;font-size:17px;line-height:1.55}
+a{color:#1d4ed8}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:310px;flex:0 0 310px;background:linear-gradient(180deg,#fff,#eef4ff);border-right:3px solid #1d4ed8;
+padding:20px 18px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.logo{width:46px;height:46px;border-radius:12px;background:#1d4ed8;color:#fff;display:grid;place-items:center;font-size:22px;font-weight:bold}
+.brand h1{font-size:20px;margin:0}
+.brand small{color:#475569;font-size:12px}
+.paper{font-size:12.5px;color:#475569;border-left:4px solid #93c5fd;padding:6px 10px;margin:12px 0 16px;background:#fff;border-radius:0 8px 8px 0}
+nav{display:flex;flex-direction:column;gap:6px}
+nav a{display:flex;gap:10px;align-items:center;text-decoration:none;color:#1f2937;padding:10px 12px;border-radius:10px;
+border:1px solid transparent;font-size:15.5px}
+nav a .num{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:bold}
+nav a:hover{background:#e0ecff;border-color:#bfdbfe}
+nav a.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+nav a.active .num{background:#fff;color:#1d4ed8}
+.status{margin-top:18px;font-size:13px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;color:#334155}
+.status b{color:#1d4ed8}
+main{flex:1;min-width:0;padding:26px 30px 70px}
+.page{display:none;max-width:1150px}
+.page.active{display:block}
+h2{font-size:24px;margin:0 0 6px}
+.lead{color:#475569;margin:0 0 18px;font-size:15.5px}
+.card{background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px #0f172a12}
+.card h3{margin:0 0 12px;font-size:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+label{display:block;font-size:13px;color:#334155;text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px}
+input[type=file],select,input[type=number],input[type=text]{width:100%;padding:9px 10px;border:1px solid #94a3b8;
+border-radius:8px;background:#fff;font-family:inherit;font-size:15px;color:#0f172a}
+input[type=file]{border-style:dashed;background:#f8fbff}
+button{border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:15px;cursor:pointer;background:#1d4ed8;color:#fff;font-weight:bold}
+button:hover{background:#1e40af}
+button.alt{background:#fff;color:#1d4ed8;border:2px solid #1d4ed8}
+button.small{padding:7px 12px;font-size:13.5px}
+button:disabled{opacity:.5;cursor:progress}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th,td{border-bottom:1px solid #e2e8f0;padding:8px 9px;text-align:left}
+th{background:#eff6ff;color:#1e3a8a;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+tr:hover td{background:#f8fbff}
+.tablewrap{max-height:440px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi div{background:#f1f5ff;border:1px solid #c7d2fe;border-radius:12px;padding:12px}
+.kpi small{display:block;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:22px}
+canvas{width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#334155;margin-top:8px}
+.legend i{display:inline-block;width:20px;height:4px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.muted{color:#475569;font-size:14px}
+.err{color:#b91c1c;font-size:14px;margin-top:10px;white-space:pre-wrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:bold;border:1px solid}
+.pill.anomaly{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
+.pill.normal{background:#dcfce7;color:#15803d;border-color:#86efac}
+.pill.drift{background:#fef3c7;color:#b45309;border-color:#fcd34d}
+code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 5px;font-family:Consolas,monospace;font-size:13.5px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{cursor:pointer;font-size:13.5px;padding:6px 12px;border-radius:999px;border:1px solid #94a3b8;background:#fff;color:#334155}
+.chip.on{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.progress{height:18px;border-radius:10px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1}
+.progress .bar{height:100%;width:0;background:linear-gradient(90deg,#2563eb,#0ea5e9);transition:width .25s}
+.trace{margin-top:10px;max-height:240px;overflow:auto;background:#0f172a;color:#e0f2fe;border-radius:10px;
+padding:10px 12px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.trace .ok{color:#86efac}.trace .warn{color:#fde68a}
+.tick{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px}
+</style></head>
+<body><div class="layout">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">Σ</div><div><h1>DyMETER</h1><small>online anomaly detection lab</small></div></div>
+  <div class="paper">Faithful Java port of <b>Catching Every Ripple: Enhanced Anomaly Awareness via Dynamic
+    Concept Adaptation</b> (IEEE TPAMI). SCD Eq.3–4 · IEC Eq.2,5–8 · DSD Eq.9–14 · DTO Eq.15–20 · Algorithm 1 &amp; 2.</div>
+  <nav id="nav">
+    <a href="#/upload"><span class="num">1</span> Upload &amp; configure</a>
+    <a href="#/pipeline"><span class="num">2</span> Run the pipeline</a>
+    <a href="#/metrics"><span class="num">3</span> Scores &amp; metrics</a>
+    <a href="#/visuals"><span class="num">4</span> Visualisations</a>
+    <a href="#/drift"><span class="num">5</span> Concept drift timeline</a>
+    <a href="#/rows"><span class="num">6</span> Row diagnostics</a>
+    <a href="#/ablation"><span class="num">7</span> Ablation lab</a>
+    <a href="#/report"><span class="num">8</span> Report &amp; downloads</a>
+    <a href="#/about"><span class="num">9</span> Paper ↔ code map</a>
+  </nav>
+  <div class="status" id="status"><b>Idle.</b> Choose a CSV on page 1, configure the run on page 2.</div>
+</aside>
+<main id="main">
+
+  <section class="page" id="page-upload">
+    <h2>1 · Upload the stream</h2>
+    <p class="lead">Any numeric CSV works. A column named <code>label</code>, <code>class</code>,
+      <code>target</code> or <code>anomaly</code> is detected automatically, removed from the features and used
+      <em>only</em> for AUCROC/AUCPR scoring - DyMETER trains unsupervised.</p>
+    <div class="card">
+      <h3>Choose a CSV file</h3>
+      <input type="file" id="file" accept=".csv,text/csv">
+      <div class="row"><span class="muted" id="fileInfo">No file selected yet.</span></div>
+      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Header</th><th>Row 1</th><th>Row 2</th></tr></thead>
+        <tbody id="preview"><tr><td colspan="3" class="muted">A three-row preview appears here.</td></tr></tbody></table></div>
+      <div class="row">
+        <button class="alt small" id="useSample">Load the bundled sample stream</button>
+        <span class="muted">or upload any benchmark CSV (Ionosphere, Pima, Satellite, Mammography, INSECTS, machine temperature, CPU utilisation, …).</span>
+      </div>
+      <div class="err" id="err1"></div>
+    </div>
+    <div class="card">
+      <h3>What happens to this file</h3>
+      <div class="steps">
+        <div class="step">Features are z-scored with the <b>historical</b> statistics (first 20 % of the rows), so streaming statistics stay causally valid.</div>
+        <div class="step">The first 20 % train the SCD (Eq. 3–4) with Adam, then the IEC (Eq. 2, 5–8) and finally the DSD hypernetwork (Eq. 9–14) with gradients propagated through the SCD and the IEC.</div>
+        <div class="step">The remaining 80 % are streamed one record at a time: uncertainty, escalation, score and threshold are recomputed for every record (Algorithm 2).</div>
+        <div class="step">AUCROC/AUCPR, drift episodes and a full report are produced when the stream ends.</div>
+      </div>
+      <div class="row"><button id="toConfig">Continue to the run configuration →</button></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-pipeline">
+    <h2>2 · Configure and run the pipeline</h2>
+    <p class="lead">Defaults are the paper's settings (Adam lr 1e-2 decayed ×0.96, minibatch 64, |W<sub>N</sub>| = |W<sub>C</sub>| = 64,
+      γ = 2, λ = 0.6, κ = 0.8, τ = 0.05, historical ratio 20 %).</p>
+    <div class="card">
+      <h3>Run configuration</h3>
+      <div class="grid3">
+        <div><label>Variant</label><input type="text" value="DyMETER (full model)" disabled title="Ablation lab removed: every run uses the full DyMETER model"></div>
+        <div><label for="epochs">Adam epochs</label><select id="epochs">
+          <option value="400">400 · fast</option><option value="900" selected>900 · balanced</option>
+          <option value="2000">2000 · paper setting</option></select></div>
+        <div><label for="batch">Minibatch size</label><input type="number" id="batch" value="64" min="8" step="8"></div>
+        <div><label for="drift">Stream generator</label><select id="drift">
+          <option value="none">none · use the file order</option><option value="abrupt">abrupt drift</option>
+          <option value="gradual">gradual / incremental</option><option value="recurrent">recurrent</option>
+          <option value="mixed">mixed (abrupt + gradual + recurrent)</option></select></div>
+        <div><label for="concepts">Generator concepts</label><input type="number" id="concepts" value="4" min="2" max="8"></div>
+        <div><label for="magnitude">Concept offset</label><input type="number" id="magnitude" value="2.0" step="0.5"></div>
+        <div><label for="tau">τ · quantile</label><input type="number" id="tau" value="0.05" step="0.01"></div>
+        <div><label for="lambda">λ · score weight</label><input type="number" id="lambda" value="0.6" step="0.1"></div>
+        <div><label for="kappa">κ · regularization</label><input type="number" id="kappa" value="0.8" step="0.1"></div>
+        <div><label for="mue">μ<sub>e</sub> (blank = derived)</label><input type="text" id="mue" placeholder="derived from training"></div>
+        <div><label for="noise">Training noise</label><input type="number" id="noise" value="0" step="0.05"></div>
+        <div><label for="seed">Seed</label><input type="number" id="seed" value="42"></div>
+      </div>
+      <div class="row">
+        <button id="run">▶ Run DyMETER on this stream</button>
+        <button class="alt" id="toUpload">← Change file</button>
+        <span class="muted" id="runInfo"></span>
+      </div>
+      <div class="err" id="err2"></div>
+    </div>
+    <div class="card">
+      <h3>Live progress</h3>
+      <div class="progress"><div class="bar" id="progressBar"></div></div>
+      <div class="row" style="margin-top:8px">
+        <span id="progressStage" class="muted">Idle — press ‛Run DyMETER on this stream”.</span>
+      </div>
+      <div class="row" style="margin-top:0">
+        <span class="muted" id="progressDetail"></span>
+      </div>
+      <div class="trace" id="epochTrace">backend console idle — every Adam epoch of every training stage for every dataset is streamed here while the pipeline runs.</div>
+    </div>
+    <div class="card">
+      <h3>Pipeline trace (Algorithm 1 then Algorithm 2)</h3>
+      <div class="steps">
+        <div class="step"><b>SCD training</b> — symmetric autoencoder, Adam, Eq. (3)–(4). <span class="muted" id="done1"></span></div>
+        <div class="step"><b>Pseudo-labelling + IEC</b> — Eq. (5)–(8), repeated until μ<sub>e</sub> converges. <span class="muted" id="done2"></span></div>
+        <div class="step"><b>DSD hypernetwork</b> — Eq. (9)–(14), gradients through the SCD and the IEC. <span class="muted" id="done3"></span></div>
+        <div class="step"><b>DTO calibration and streaming</b> — Eq. (15)–(20) for every record. <span class="muted" id="done4"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-metrics">
+    <h2>3 · Scores and metrics</h2>
+    <p class="lead">Everything the run produced for the streamed part of the file. AUCROC/AUCPR appear when the CSV carries a label column.</p>
+    <div class="card"><h3>Key numbers</h3><div class="kpi" id="kpis"><span class="muted">Run the pipeline first.</span></div></div>
+    <div class="grid2">
+      <div class="card"><h3>Evaluation metrics</h3><div class="tablewrap" style="max-height:none">
+        <table><tbody id="metricTable"><tr><td class="muted">No run yet.</td></tr></tbody></table></div></div>
+      <div class="card"><h3>Learned quantities</h3><div class="tablewrap" style="max-height:none">
+        <table><tbody id="learnedTable"><tr><td class="muted">No run yet.</td></tr></tbody></table></div></div>
+    </div>
+    <div class="card"><h3>Anomaly-score distribution</h3>
+      <canvas id="hist" width="1100" height="330"></canvas>
+      <div class="legend"><span><i style="background:#2563eb"></i>normal scores</span>
+        <span><i style="background:#dc2626"></i>anomalous scores</span>
+        <span><i style="background:#b45309"></i>adaptive threshold μ*</span></div>
+      <div class="row"><button class="alt small" data-png="hist" data-name="score-distribution">Download PNG</button></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-visuals">
+    <h2>4 · Visualisations (downloadable)</h2>
+    <p class="lead">Each figure is a canvas: save it as PNG, or download the underlying numbers as CSV.</p>
+    <div class="card"><h3>A · Anomaly score versus the adaptive threshold</h3>
+      <canvas id="chart1" width="1100" height="420"></canvas>
+      <div class="legend"><span><i style="background:#2563eb"></i>A(x)</span><span><i style="background:#b45309"></i>μ*(x)</span>
+        <span><i style="background:#dc2626"></i>flagged records</span><span><i style="background:#94a3b8"></i>concept boundaries</span></div>
+      <div class="row"><button class="alt small" data-png="chart1" data-name="score-vs-threshold">Download PNG</button>
+        <button class="alt small" data-csv="curves" data-name="stream-curves">Download curves CSV</button></div>
+    </div>
+    <div class="card"><h3>B · Concept uncertainty and reconstruction error</h3>
+      <canvas id="chart2" width="1100" height="420"></canvas>
+      <div class="legend"><span><i style="background:#7c3aed"></i>U<sub>ctr</sub>(x) · Eq. 8</span>
+        <span><i style="background:#e11d48"></i>R<sub>e</sub>(x) · Eq. 4 / 14</span>
+        <span><i style="background:#0ea5e9"></i>smoothed uncertainty (drift signal)</span>
+        <span><i style="background:#b45309"></i>μ<sub>e</sub></span></div>
+      <div class="row"><button class="alt small" data-png="chart2" data-name="uncertainty-and-error">Download PNG</button></div>
+    </div>
+    <div class="card"><h3>C · Concept timeline</h3>
+      <canvas id="chart3" width="1100" height="240"></canvas>
+      <div class="legend"><span><i style="background:#0ea5e9"></i>concept episode</span>
+        <span><i style="background:#dc2626"></i>anomaly</span><span><i style="background:#b45309"></i>threshold re-initialisation</span></div>
+      <div class="row"><button class="alt small" data-png="chart3" data-name="concept-timeline">Download PNG</button>
+        <button class="alt small" data-csv="drift" data-name="concept-drift-events">Download drift events CSV</button></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-drift">
+    <h2>5 · Concept drift timeline</h2>
+    <p class="lead">Every concept episode, the row where it was declared, and why the IEC concluded that the static detector had become unreliable.</p>
+    <div class="card"><h3>Drift events</h3>
+      <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Row</th><th>Concept</th><th>U<sub>ctr</sub></th>
+        <th>R<sub>e</sub></th><th>μ* at onset</th><th>Flagged</th><th>Reason (why this is concept drift)</th></tr></thead>
+        <tbody id="driftTable"><tr><td colspan="7" class="muted">No run yet.</td></tr></tbody></table></div>
+      <div class="row"><button class="alt small" data-csv="drift" data-name="concept-drift-events">Download CSV</button></div>
+    </div>
+    <div class="card"><h3>Per-concept summary</h3>
+      <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Concept</th><th>Rows</th><th>Flagged</th>
+        <th>Mean U<sub>ctr</sub></th><th>Mean R<sub>e</sub></th><th>Mean μ*</th></tr></thead>
+        <tbody id="conceptTable"><tr><td colspan="6" class="muted">No run yet.</td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-rows">
+    <h2>6 · Row diagnostics</h2>
+    <p class="lead">The full per-record trace of Algorithm 2 for the streamed part of the file.</p>
+    <div class="card">
+      <div class="chips">
+        <span class="chip on" data-filter="all">all rows</span><span class="chip" data-filter="anomaly">anomalies</span>
+        <span class="chip" data-filter="normal">normal</span><span class="chip" data-filter="drift">drift rows</span>
+        <span class="chip" data-filter="reset">threshold re-initialisations</span>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>Row</th><th>Concept</th><th>U<sub>ctr</sub></th><th>R<sub>e</sub></th>
+        <th>A(x)</th><th>μ*(x)</th><th>Decision</th><th>Truth</th><th>Drift</th><th>Threshold</th></tr></thead>
+        <tbody id="rowTable"><tr><td colspan="10" class="muted">No run yet.</td></tr></tbody></table></div>
+      <div class="row"><button class="alt small" data-csv="rows" data-name="row-diagnostics">Download diagnostics CSV</button>
+        <span class="muted" id="rowHint"></span></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-ablation">
+    <h2>7 · Ablation lab</h2>
+    <p class="lead">The 12 variants of the paper's ablation study, run on the same stream and configuration.</p>
+    <div class="card">
+      <div class="row" style="margin-top:0"><button id="ablate">Run all 12 variants</button>
+        <span class="muted" id="ablationInfo">Each variant trains the framework once.</span></div>
+      <div class="err" id="err3"></div>
+      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Variant</th><th>AUCROC</th><th>AUCPR</th>
+        <th>FPR</th><th>Recall</th><th>Concepts</th><th>Resets</th><th>Updates</th><th>Removes / changes</th></tr></thead>
+        <tbody id="ablationTable"><tr><td colspan="9" class="muted">No ablation run yet.</td></tr></tbody></table></div>
+      <div class="row"><button class="alt small" data-csv="ablation" data-name="ablation-study">Download ablation CSV</button></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-report">
+    <h2>8 · Report (PDF)</h2>
+    <p class="lead">The report is a real PDF file: dataset details, the epochs executed, the timestamp, the metrics,
+      the concept-drift events with row numbers and reasons, the configuration and the figures. It is generated and
+      <b>downloaded automatically</b> as soon as a run finishes, and can be regenerated at any time.</p>
+    <div class="card">
+      <div class="row" style="margin-top:0">
+        <button id="reportNow">⬇ Generate and download the PDF report</button>
+        <span class="muted" id="reportInfo">No run yet.</span>
+      </div>
+      <div class="row"><span class="muted">Exported data (not the report): the four figures as PNG on page 4 and the
+        underlying numbers as CSV.</span></div>
+    </div>
+    <div class="card"><h3>Report content preview</h3><pre id="reportPreview">The generated report appears here.</pre></div>
+  </section>
+
+  <section class="page" id="page-about">
+    <h2>9 · Paper ↔ code map</h2>
+    <p class="lead">Every equation of the paper is implemented in a named method and referenced by comment in the source.</p>
+    <div class="card"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>Paper</th><th>Meaning</th>
+      <th>Java implementation</th></tr></thead><tbody id="mapTable"></tbody></table></div></div>
+  </section>
+</main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const VARIANTS=["DyMETER","DyMETER-S","DyMETER-D","DyMETER-SD","DyMETER-SDT","DyMETER w/o IEC","DyMETER w/o DTO",
+  "DyMETER-ce","DyMETER-pl","DyMETER-re","DyMETER-Q","DyMETER-A"];
+const PAGES=["upload","pipeline","metrics","visuals","drift","rows","ablation","report","about"];
+const state={csv:'',dataset:'',filename:'',payload:null,ablation:null,filter:'all',lastStage:''};
+
+/* ---------------- router: one page per hash, previous pages stay routable ---------------- */
+function route(){
+  const name=(location.hash.replace('#/','')||'upload').split('?')[0];
+  const page=PAGES.includes(name)?name:'upload';
+  PAGES.forEach(p=>$('page-'+p).classList.toggle('active',p===page));
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#/'+page));
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+$('nav').addEventListener('click',event=>{const link=event.target.closest('a');if(link)setTimeout(route,0);});
+
+/* ---------------- page 1: upload ---------------- */
+VARIANTS.forEach(v=>$('variant').append(new Option(v,v)));
+$('file').addEventListener('change',async()=>{
+  const file=$('file').files[0];if(!file)return;
+  state.csv=await file.text();state.dataset='';state.filename=file.name;describeCsv();
+});
+$('useSample').addEventListener('click',async()=>{
+  try{
+    const response=await fetch('/data/sample_stream.csv');
+    if(!response.ok)throw Error('the bundled sample data/sample_stream.csv is not served');
+    state.csv=await response.text();
+    state.dataset='sample_stream.csv';          /* the server can load it directly, no large upload needed */
+    state.filename='sample_stream.csv';describeCsv();
+  }catch(failure){$('err1').textContent=failure.message;}
+});
+function describeCsv(){
+  const lines=state.csv.trim().split(/\r?\n/);
+  const header=lines[0].split(',');
+  const dataRows=lines.length-1;
+  $('fileInfo').innerHTML='<b>'+state.filename+'</b> · '+dataRows+' data rows · '+header.length+' columns';
+  $('preview').innerHTML=header.slice(0,6).map((name,index)=>
+    '<tr><td>'+name+'</td><td>'+(lines[1]||'').split(',')[index]+'</td><td>'+(lines[2]||'').split(',')[index]+'</td></tr>').join('');
+  $('status').innerHTML='<b>File ready.</b> '+state.filename+' · '+dataRows+' rows. Go to page 2.';
+  $('err1').textContent='';
+  location.hash='#/pipeline';
+}
+$('toConfig').addEventListener('click',()=>location.hash='#/pipeline');
+$('toUpload').addEventListener('click',()=>location.hash='#/upload');
+
+function parameters(){
+  const mue=$('mue').value.trim();
+  const params=new URLSearchParams({filename:state.filename,variant:$('variant').value,
+    epochs:$('epochs').value,batch:$('batch').value,drift:$('drift').value,concepts:$('concepts').value,
+    magnitude:$('magnitude').value,tau:$('tau').value,lambda:$('lambda').value,kappa:$('kappa').value,
+    noise:$('noise').value,seed:$('seed').value});
+  if(state.dataset)params.set('dataset',state.dataset);else params.set('csv',state.csv);
+  if(mue)params.set('mue',mue);
+  return params;
+}
+
+/* ---------------- live progress of the background job ---------------- */
+let progressTimer=null;
+let lastTraceKey='';
+function startProgress(){
+  stopProgress();lastTraceKey='';
+  $('epochTrace').textContent='backend console — waiting for the first epoch…';
+  progressTimer=setInterval(pollProgress,250);
+  pollProgress();
+}
+function stopProgress(){
+  if(progressTimer){clearInterval(progressTimer);progressTimer=null;}
+}
+function resetProgressUi(){
+  $('progressBar').style.width='0%';
+  $('progressStage').textContent='Starting…';
+  $('progressDetail').textContent='the browser polls /api/progress every 250 ms while the server trains and streams';
+  $('epochTrace').textContent='backend console starting — the SCD epochs appear first, then IEC, then DSD, then the streamed records.';
+}
+async function pollProgress(){
+  try{
+    const response=await fetch('/api/progress',{cache:'no-store'});
+    if(!response.ok)return;
+    renderProgress(await response.json());
+  }catch(failure){/* the run finishes and the interval is cleared; transient errors are ignored */}
+}
+function trace(text,cls){
+  const box=$('epochTrace');
+  if(box.dataset.empty==='1'){box.textContent='';box.dataset.empty='0';}
+  const line=document.createElement('div');
+  if(cls)line.className=cls;
+  line.textContent=text;
+  box.appendChild(line);
+  while(box.children.length>220)box.removeChild(box.firstChild);
+  box.scrollTop=box.scrollHeight;
+}
+function renderProgress(p){
+  const percent=Math.round(100*(p.fraction||0));
+  $('progressBar').style.width=percent+'%';
+  if(!p.running){
+    return;
+  }
+  const elapsed=(p.elapsedMillis/1000).toFixed(1)+' s';
+  const key=(p.stage||'')+'|'+(p.epoch||0)+'|'+(p.rows||0)+'|'+(p.job||'');
+  if(key!==lastTraceKey){
+    lastTraceKey=key;
+    let line='['+elapsed+'] '+(p.dataset||'dataset');
+    if(p.jobCount>1)line+=' · variant '+(p.job||p.variant||'');
+    if(p.stage==='streaming')line+=' · streaming record '+(p.rows||0)+' / '+(p.totalRows||0)+' (Algorithm 2)';
+    else if(p.epochs>0)line+=' · '+p.stage+' — backend epoch '+(p.epoch||0)+' / '+p.epochs+' (stage '+Math.max(1,p.stageIndex)+'/'+p.stageCount+')';
+    else line+=' · '+p.stage+' — '+(p.message||'');
+    if(p.stage==='streaming'&&(p.rows||0)>0&&(p.rows%100===0||p.rows===p.totalRows))trace(line,'ok');
+    else if(p.epochs>0&&((p.epoch||0)===1||(p.epoch||0)===p.epochs||(p.epoch||0)%100===0))trace(line,(p.epoch||0)===p.epochs?'ok':'');
+    else if(p.epochs===0)trace(line,'');
+  }
+  let stageText=p.stage;
+  if(p.stage==='streaming')stageText+=' — record '+(p.rows||0)+' / '+(p.totalRows||0);
+  else if(p.epochs>0)stageText+=' — backend epoch '+(p.epoch||0)+' / '+p.epochs;
+  state.lastStage=stageText;
+  $('progressStage').innerHTML='<b>'+stageText+'</b> &nbsp;·&nbsp; '+percent+' % &nbsp;·&nbsp; '+elapsed+
+    (p.offlineUpdate?' &nbsp;·&nbsp; <i>offline fine-tuning running in parallel</i>':'');
+  $('progressDetail').textContent='dataset '+(p.dataset||'-')+' · '+(p.job||p.variant||'-')+' · '+(p.message||'')+
+    ' · stage '+Math.max(1,p.stageIndex)+'/'+p.stageCount;
+  $('status').innerHTML='<b>Running…</b> '+(p.dataset||'')+' · '+stageText+' · '+percent+' %';
+}
+
+$('run').addEventListener('click',async()=>{
+  if(!state.csv){$('err2').textContent='Choose a CSV on page 1 first.';return;}
+  $('err2').textContent='';$('run').disabled=true;$('done1').textContent=$('done2').textContent=$('done3').textContent=$('done4').textContent='';
+  resetProgressUi();
+  $('epochTrace').dataset.empty='1';$('epochTrace').textContent='';$('epochTrace').dataset.empty='0';
+  trace('[0.0 s] '+state.filename+' · job queued — SCD → IEC → DSD training, then streaming');
+  $('status').innerHTML='<b>Running…</b> training the SCD, IEC and DSD, then streaming the records.';
+  $('runInfo').textContent='training + streaming…';
+  startProgress();
+  const started=Date.now();
+  try{
+    const response=await fetch('/api/run',{method:'POST',body:parameters()});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||'Run failed.');
+    state.payload=data;
+    $('done1').textContent='⛓ '+data.config.layers.join(' → ')+' ('+data.config.epochs+' epochs)';
+    $('done2').textContent='⛓ μ_e = '+num(data.learned.muE)+' · μ_p = '+num(data.learned.muP);
+    $('done3').textContent='⛓ '+data.summary.driftRows+' records escalated to Θ_d';
+    $('done4').textContent='⛓ '+data.summary.rows+' records streamed in '+(Date.now()-started)+' ms';
+    $('runInfo').textContent='finished in '+((Date.now()-started)/1000).toFixed(1)+' s';
+    $('progressStage').innerHTML='<span class="tick"></span>Finished — SCD '+data.config.epochs+' + IEC '+data.config.epochs+' + DSD '+data.config.epochs+' backend epochs, '+data.summary.rows+' streamed records';
+    $('progressDetail').textContent=state.filename+' · '+data.summary.rows+' records · '+data.summary.driftEpisodes+' concepts';
+    trace('['+((Date.now()-started)/1000).toFixed(1)+' s] '+state.filename+' · backend done — streamed '+data.summary.rows+' records, '+data.summary.driftEpisodes+' concepts','ok');
+    $('status').innerHTML='<b>Run complete.</b> '+data.summary.rows+' streamed records · AUCROC '+num(data.metrics.aucroc)+
+      ' · '+data.summary.driftEpisodes+' concepts · '+data.summary.thresholdResets+' threshold re-initialisations.';
+    renderAll(data);
+    const report=downloadReport();        /* PDF ONLY: generated and auto-downloaded, no .md/.json report */
+    if(report)trace('['+((Date.now()-started)/1000).toFixed(1)+' s] '+report+' auto-downloaded (PDF only)','ok');
+    location.hash='#/metrics';
+  }catch(failure){
+    $('err2').textContent=failure.message;
+    trace('run failed: '+failure.message,'warn');
+    $('status').innerHTML='<b>Run failed.</b> '+failure.message;
+  }finally{
+    stopProgress();
+    $('progressBar').style.width='100%';
+    $('run').disabled=false;
+  }
+});
+
+function num(v){return v===null||v===undefined?'n/a':(Math.abs(v)>=1000?v.toFixed(0):Number(v).toFixed(4));}
+function pct(v){return v===null||v===undefined?'n/a':(100*v).toFixed(1)+' %';}
+
+/* ---------------- page 3: metrics ---------------- */
+function renderAll(data){
+  const m=data.metrics,s=data.summary,c=data.config,d=data.dataset;
+  $('kpis').innerHTML=[
+    card('AUCROC',num(m.aucroc)),card('AUCPR',num(m.aucpr)),card('FPR at μ*',pct(m.fpr)),
+    card('Recall',pct(m.recall)),card('Precision',pct(m.precision)),card('Flagged',m.flagged+' / '+s.rows),
+    card('Concepts',s.driftEpisodes),card('Threshold re-inits',s.thresholdResets),
+    card('Offline updates',s.offlineUpdates),card('Train / infer',(s.trainingMillis/1000).toFixed(1)+' s / '+s.inferenceMillis+' ms')].join('');
+  $('metricTable').innerHTML=[['Dataset',d.filename+' ('+d.rows+' rows × '+d.dimensions+' features'+(d.labelled?', '+d.anomalies+' labelled anomalies':'')+')'],
+    ['Variant',data.variant+' — '+data.description],['Adam epochs',c.epochs],['Minibatch / window',c.batch+' / '+c.window],
+    ['Historical segment',c.historical+' rows (20 %)'],['Streamed records',s.rows],
+    ['Layer sizes',c.layers.join(' → ')],['Latent width',c.latentWidth],['τ / λ / κ / γ',c.tau+' / '+c.lambda+' / '+c.kappa+' / '+c.gamma],
+    ['AUCROC',num(m.aucroc)],['AUCPR',num(m.aucpr)],['False-positive rate',pct(m.fpr)],['Recall',pct(m.recall)],
+    ['Precision',pct(m.precision)],['Labelled positives / negatives',m.positives+' / '+m.negatives],
+    ['Drift rows (escalated to DSD)',s.driftRows],['Concept episodes',s.driftEpisodes],
+    ['Threshold re-initialisations',s.thresholdResets],['Offline updates (Eq. 20)',s.offlineUpdates],
+    ['Training / inference time',(s.trainingMillis/1000).toFixed(2)+' s / '+(s.inferenceMillis/1000).toFixed(3)+' s']]
+    .map(([k,v])=>'<tr><th style="width:45%">'+k+'</th><td>'+v+'</td></tr>').join('');
+  $('learnedTable').innerHTML=[['μ_e · concept uncertainty threshold',num(data.learned.muE)],
+    ['μ_p · pseudo-labelling threshold',num(data.learned.muP)],['μ_t · max training uncertainty',num(data.learned.muT)],
+    ['Reference error r_e (adapted by EMA)',num(data.curves.error.length?Math.max(...data.curves.error):null)],
+    ['Concept uncertainty above μ_e',pct(data.curves.uncertainty.filter(v=>v>data.learned.muE).length/Math.max(1,s.rows))],
+    ['Mean reconstruction error',num(avg(data.curves.error))],['Mean anomaly score',num(avg(data.curves.score))]]
+    .map(([k,v])=>'<tr><th style="width:45%">'+k+'</th><td>'+v+'</td></tr>').join('');
+  drawHistogram(data);drawChart1(data);drawChart2(data);drawChart3(data);
+  renderDrift(data);renderRows(data);renderMap();
+}
+function card(label,value){return '<div><small>'+label+'</small><b>'+value+'</b></div>';}
+function avg(values){return values.length?values.reduce((a,b)=>a+b,0)/values.length:null;}
+
+/* ---------------- charts (canvas, downloadable) ---------------- */
+function axes(ctx,w,h,pad,maxValue,maxLabel){
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;ctx.font='13px "Times New Roman",serif';ctx.fillStyle='#475569';
+  for(let g=0;g<=5;g++){
+    const value=maxValue*g/5,y=h-pad.bottom-(h-pad.top-pad.bottom)*g/5;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();
+    ctx.fillText(value.toFixed(maxValue<10?2:0),4,y+5);
+  }
+  ctx.fillText(maxLabel,w-160,h-6);
+}
+function plotSeries(ctx,values,w,h,pad,maxValue,colour,width){
+  const n=values.length;if(n===0)return;
+  ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.beginPath();
+  let started=false;
+  for(let i=0;i<n;i++){
+    const v=values[i];
+    if(v===null||!isFinite(v)){started=false;continue;}
+    const x=pad.left+(w-pad.left-pad.right)*(n===1?0:i/(n-1));
+    const y=h-pad.bottom-(h-pad.top-pad.bottom)*Math.min(1,Math.max(0,v/maxValue));
+    if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+function maxOf(...series){
+  let max=0;series.forEach(values=>values.forEach(v=>{if(isFinite(v))max=Math.max(max,v);}));
+  return max>0?max:1;
+}
+function drawChart1(data){
+  const canvas=$('chart1'),ctx=canvas.getContext('2d'),c=data.curves,w=canvas.width,h=canvas.height;
+  const pad={left:56,right:16,top:16,bottom:34},max=maxOf(c.score,c.threshold)*1.05;
+  axes(ctx,w,h,pad,max,'stream record →');
+  // flagged background
+  ctx.fillStyle='#fee2e2';
+  const step=(w-pad.left-pad.right)/Math.max(1,c.score.length);
+  for(let i=0;i<c.score.length;i++)if(c.decision[i])ctx.fillRect(pad.left+i*step,pad.top,Math.max(1,step),h-pad.top-pad.bottom);
+  // concept boundaries
+  ctx.strokeStyle='#94a3b8';ctx.setLineDash([4,4]);
+  for(let i=1;i<c.concept.length;i++)if(c.concept[i]!==c.concept[i-1]){
+    const x=pad.left+(w-pad.left-pad.right)*(i/(c.score.length-1||1));
+    ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,h-pad.bottom);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  plotSeries(ctx,c.score,w,h,pad,max,'#2563eb',1.6);
+  plotSeries(ctx,c.threshold,w,h,pad,max,'#b45309',2.2);
+}
+function drawChart2(data){
+  const canvas=$('chart2'),ctx=canvas.getContext('2d'),c=data.curves,w=canvas.width,h=canvas.height;
+  const mu=data.learned.muE||0,pad={left:56,right:16,top:16,bottom:34};
+  const max=Math.max(maxOf(c.uncertainty)*1.15,mu*3,c.error.length?Math.min(maxOf(c.error),1):1);
+  axes(ctx,w,h,pad,max,'stream record →');
+  ctx.strokeStyle='#b45309';ctx.setLineDash([6,4]);ctx.beginPath();
+  const ymu=h-pad.bottom-(h-pad.top-pad.bottom)*Math.min(1,mu/max);
+  ctx.moveTo(pad.left,ymu);ctx.lineTo(w-pad.right,ymu);ctx.stroke();ctx.setLineDash([]);
+  plotSeries(ctx,c.uncertainty,w,h,pad,max,'#7c3aed',1.8);
+  plotSeries(ctx,c.error,w,h,pad,max,'#e11d48',1.2);
+}
+function drawChart3(data){
+  const canvas=$('chart3'),ctx=canvas.getContext('2d'),c=data.curves,w=canvas.width,h=canvas.height;
+  axes(ctx,w,h,{left:56,right:16,top:16,bottom:34},Math.max(2,data.summary.driftEpisodes),'stream record →');
+  const pad={left:56,right:16,top:16,bottom:34},step=(w-pad.left-pad.right)/Math.max(1,c.concept.length);
+  const palette=['#0ea5e9','#22c55e','#a855f7','#f97316','#14b8a6','#eab308'];
+  for(let i=0;i<c.concept.length;i++){
+    const band=Math.min(1,(c.concept[i]-1)/Math.max(1,data.summary.driftEpisodes-0));
+    ctx.fillStyle=palette[(c.concept[i]-1)%palette.length];
+    ctx.globalAlpha=.25+.6*band;
+    ctx.fillRect(pad.left+i*step,h-pad.bottom-46,Math.max(1,step),44);
+  }
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#dc2626';
+  for(let i=0;i<c.decision.length;i++)if(c.decision[i])ctx.fillRect(pad.left+i*step,h-pad.bottom-52,Math.max(1,step),5);
+  ctx.fillStyle='#b45309';
+  for(let i=0;i<c.reset.length;i++)if(c.reset[i])ctx.fillRect(pad.left+i*step,h-pad.bottom-58,Math.max(1.6,step),14);
+  ctx.fillStyle='#334155';ctx.font='14px "Times New Roman",serif';
+  ctx.fillText('concept episodes 1…'+data.summary.driftEpisodes,pad.left+4,h-14);
+}
+function drawHistogram(data){
+  const canvas=$('hist'),ctx=canvas.getContext('2d'),c=data.curves,w=canvas.width,h=canvas.height;
+  const pad={left:56,right:16,top:16,bottom:34};
+  const maxScore=maxOf(c.score),bins=60,counts=Array(bins).fill(0),anom=Array(bins).fill(0);
+  for(let i=0;i<c.score.length;i++){
+    const b=Math.min(bins-1,Math.floor((c.score[i]/maxScore)*bins));
+    counts[b]++;if(c.decision[i])anom[b]++;
+  }
+  const peak=Math.max(1,...counts);
+  axes(ctx,w,h,pad,peak,'score bin →');
+  const width=(w-pad.left-pad.right)/bins;
+  for(let b=0;b<bins;b++){
+    const x=pad.left+b*width;
+    const yNormal=h-pad.bottom-(h-pad.top-pad.bottom)*(counts[b]/peak);
+    ctx.fillStyle='#93c5fd';ctx.fillRect(x,yNormal,width-1,h-pad.bottom-yNormal);
+    if(anom[b]>0){
+      const yAnom=h-pad.bottom-(h-pad.top-pad.bottom)*(anom[b]/peak);
+      ctx.fillStyle='#dc2626';ctx.fillRect(x,yAnom,width-1,h-pad.bottom-yAnom);
+    }
+  }
+  const threshold=c.threshold.length?c.threshold[c.threshold.length-1]:0;
+  const x=h?pad.left+(w-pad.left-pad.right)*Math.min(1,threshold/maxScore):0;
+  ctx.strokeStyle='#b45309';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,h-pad.bottom);ctx.stroke();
+}
+
+/* ---------------- pages 5 and 6: drift events and row diagnostics ---------------- */
+function renderDrift(data){
+  const events=data.driftEvents||[],c=data.curves;
+  $('driftTable').innerHTML=events.length?events.map(e=>'<tr><td><b>'+e.row+'</b></td><td>Concept '+e.concept+'</td>'+
+    '<td>'+num(e.uncertainty)+'</td><td>'+num(e.error)+'</td><td>'+num(e.threshold)+'</td>'+
+    '<td>'+(e.anomaly?'<span class="pill anomaly">FLAGGED</span>':'<span class="pill normal">NORMAL</span>')+'</td>'+
+    '<td style="white-space:normal;max-width:520px">'+e.reason+'</td></tr>').join('')
+    :'<tr><td colspan="7" class="muted">No concept drift was declared for this stream: the smoothed uncertainty never stayed above μ_e long enough.</td></tr>';
+  const concepts=[...new Set(c.concept)] ;
+  $('conceptTable').innerHTML=concepts.map(id=>{
+    const idx=c.concept.map((value,i)=>value===id?i:-1).filter(i=>i>=0);
+    const flagged=idx.filter(i=>c.decision[i]).length;
+    return '<tr><td>Concept '+id+'</td><td>'+idx.length+'</td><td>'+flagged+' ('+pct(flagged/Math.max(1,idx.length))+')</td>'+
+      '<td>'+num(avg(idx.map(i=>c.uncertainty[i])))+'</td><td>'+num(avg(idx.map(i=>c.error[i])))+'</td>'+
+      '<td>'+num(avg(idx.map(i=>c.threshold[i])))+'</td></tr>';
+  }).join('');
+}
+function renderRows(data){
+  const c=data.curves,rows=[];
+  for(let i=0;i<data.results.length;i++){
+    const row=data.results[i];
+    if(state.filter==='anomaly'&&!row.anomaly)continue;
+    if(state.filter==='normal'&&row.anomaly)continue;
+    if(state.filter==='drift'&&!c.drift[i])continue;
+    if(state.filter==='reset'&&!c.reset[i])continue;
+    const truth=c.label?(c.label[i]?'<span class="pill anomaly">anomaly</span>':'<span class="pill normal">normal</span>'):'<span class="muted">unlabelled</span>';
+    rows.push('<tr><td>'+row.row+'</td><td>'+row.concept+'</td><td>'+num(row.uncertainty)+'</td><td>'+num(row.error)+'</td>'+
+      '<td>'+num(row.score)+'</td><td>'+num(row.threshold)+'</td>'+
+      '<td>'+(row.anomaly?'<span class="pill anomaly">ANOMALY</span>':'<span class="pill normal">NORMAL</span>')+'</td>'+
+      '<td>'+truth+'</td><td>'+(c.drift[i]?'<span class="pill drift">DRIFT</span>':'—')+'</td>'+
+      '<td>'+(c.reset[i]?'re-initialised':'—')+'</td></tr>');
+    if(rows.length>=800)break;
+  }
+  $('rowTable').innerHTML=rows.join('')||'<tr><td colspan="10" class="muted">No rows match this filter.</td></tr>';
+  $('rowHint').textContent=data.truncated?'Only the first rows of the stream are returned by the API.':'All streamed rows are listed.';
+}
+document.querySelectorAll('.chip').forEach(chip=>chip.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(other=>other.classList.remove('on'));
+  chip.classList.add('on');state.filter=chip.dataset.filter;
+  if(state.payload)renderRows(state.payload);
+}));
+
+/* ---------------- page 7: ablation lab ---------------- */
+$('ablate').addEventListener('click',async()=>{
+  if(!state.csv){$('err3').textContent='Choose a CSV first.';return;}
+  $('err3').textContent='';$('ablate').disabled=true;$('ablationInfo').textContent='running 12 variants…';
+  $('progressBar').style.width='0%';
+  $('progressStage').textContent='Starting the ablation sweep…';
+  startProgress();
+  try{
+    const response=await fetch('/api/ablation',{method:'POST',body:parameters()});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||'Ablation failed.');
+    state.ablation=data.rows;
+    $('ablationTable').innerHTML=data.rows.map(row=>'<tr><td><b>'+row.name+'</b></td><td>'+num(row.aucroc)+'</td>'+
+      '<td>'+num(row.aucpr)+'</td><td>'+pct(row.fpr)+'</td><td>'+pct(row.recall)+'</td><td>'+row.driftEpisodes+'</td>'+
+      '<td>'+row.thresholdResets+'</td><td>'+row.offlineUpdates+'</td><td style="white-space:normal">'+row.description+'</td></tr>').join('');
+    $('ablationInfo').textContent='done · '+data.rows.length+' variants on '+data.data.filename;
+  }catch(failure){$('err3').textContent=failure.message;}
+  finally{stopProgress();$('progressBar').style.width='100%';$('ablate').disabled=false;}
+});
+
+/* ---------------- page 8: report + downloads ---------------- */
+function stamp(date){
+  const p=n=>String(n).padStart(2,'0');
+  return date.getFullYear()+'-'+p(date.getMonth()+1)+'-'+p(date.getDate())+' '+p(date.getHours())+':'+p(date.getMinutes())+':'+p(date.getSeconds());
+}
+function fileStamp(date){
+  const p=n=>String(n).padStart(2,'0');
+  return date.getFullYear()+p(date.getMonth()+1)+p(date.getDate())+'-'+p(date.getHours())+p(date.getMinutes())+p(date.getSeconds());
+}
+document.querySelectorAll('[data-png]').forEach(button=>button.addEventListener('click',()=>{
+  const canvas=$(button.dataset.png);
+  const anchor=document.createElement('a');
+  anchor.href=canvas.toDataURL('image/png');anchor.download='DyMETER-'+button.dataset.name+'.png';
+  document.body.appendChild(anchor);anchor.click();anchor.remove();
+}));
+document.querySelectorAll('[data-csv]').forEach(button=>button.addEventListener('click',()=>{
+  const data=state.payload;if(!data)return;
+  let csv='';
+  if(button.dataset.csv==='rows'){
+    csv='row,concept,uncertainty,error,score,threshold,decision,drift,threshold_reset,labelled_anomaly\n';
+    data.results.forEach((r,i)=>csv+=[r.row,r.concept,r.uncertainty,r.error,r.score,r.threshold,r.anomaly?1:0,
+      data.curves.drift[i]?1:0,data.curves.reset[i]?1:0,data.curves.label?(data.curves.label[i]?1:0):''].join(',')+'\n');
+  }else if(button.dataset.csv==='curves'){
+    csv='record,score,threshold,uncertainty,error,concept,decision\n';
+    data.curves.score.forEach((value,i)=>csv+=[i+1,value,data.curves.threshold[i],data.curves.uncertainty[i],
+      data.curves.error[i],data.curves.concept[i],data.curves.decision[i]?1:0].join(',')+'\n');
+  }else if(button.dataset.csv==='drift'){
+    csv='row,concept,uncertainty,error,threshold,flagged,reason\n';
+    (data.driftEvents||[]).forEach(e=>csv+=[e.row,e.concept,e.uncertainty,e.error,e.threshold,e.anomaly?1:0,
+      '"'+e.reason.replace(/"/g,"'")+'"'].join(',')+'\n');
+  }else if(button.dataset.csv==='ablation'){
+    csv='variant,aucroc,aucpr,fpr,recall,concepts,threshold_resets,offline_updates,description\n';
+    (state.ablation||[]).forEach(r=>csv+=[r.name,r.aucroc,r.aucpr,r.fpr,r.recall,r.driftEpisodes,r.thresholdResets,
+      r.offlineUpdates,'"'+r.description+'"'].join(',')+'\n');
+  }
+  if(csv)download('DyMETER-'+button.dataset.name+'-'+fileStamp(new Date())+'.csv',csv,'text/csv;charset=utf-8');
+}));
+
+/* ---------------- page 9: paper and code map ---------------- */
+const MAP=[['Eq. (2)','Dirichlet evidence α = g(f(x))','EvidentialController.concentration'],
+  ['Eq. (3)','x → E_s(x) → z → D_s(z) → y','AutoEncoder.forward'],
+  ['Eq. (4)','L_SCD = Σ(x_i − y_i)² / n','AutoEncoder.reconstructionLoss / backward'],
+  ['Eq. (5)','Pseudo-labelling with μ_p and μ_e','DyMeterEngine.trainController'],
+  ['Eq. (6)','p̂_c = α_c / Σ_k α_k','EvidentialController.predictiveProbability'],
+  ['Eq. (7)','Focal evidential loss','EvidentialController.focalLoss / backward'],
+  ['Eq. (8)','Concept uncertainty U_ctr (Dirichlet mutual information)','EvidentialController.uncertainty'],
+  ['Eq. (9)','e^(n) = L_layer^(n)(E_share(x))','ShiftHypernetwork.addShift'],
+  ['Eq. (10)','W^(n) = (W1 e^(n) + b1) W2 + b2','ShiftHypernetwork.addShift'],
+  ['Eq. (11)','K^(n) = W^(n) + b^(n)','ShiftHypernetwork.addShift (base)'],
+  ['Eq. (12)','Θ_d = Θ_s + ΔΘ_d','DyMeterEngine.loadDynamicWeights'],
+  ['Eq. (13)','Dynamic reconstruction x ≈ y′','AutoEncoder.forward(x, dynamicWeights, null)'],
+  ['Eq. (14)','L_DSD = L_2(x, y′)','AutoEncoder.reconstructionLoss / backward'],
+  ['Eq. (15)','A(x) = R_e exp(λ U_ctr (r_e − R_e))','DynamicThresholdOptimizer.score'],
+  ['Eq. (16)','Cost-sensitive thresholding F_c(μ_a)','DynamicThresholdOptimizer (normal-only simplification)'],
+  ['Eq. (17)','μ0 = F_N⁻¹(1−τ) over W_N','DynamicThresholdOptimizer.seed / process'],
+  ['Eq. (18)','μ_r = κ(μ0 − bAm)','DynamicThresholdOptimizer.process'],
+  ['Eq. (19)','μ* = μ0 + μ_r','DynamicThresholdOptimizer.process'],
+  ['Eq. (20)','Offline update: Σ U_ctr > μ_o or Δt > T_max','DynamicThresholdOptimizer.process, DyMeterEngine.scheduleOfflineUpdate'],
+  ['Algorithm 1','Training order SCD → IEC → DSD (joint gradients)','DyMeterEngine.train / trainController / trainDynamicDetector'],
+  ['Algorithm 2','Inference with drift escalation and threshold re-initialisation','DyMeterEngine.process / evaluateDrift']];
+function renderMap(){
+  $('mapTable').innerHTML=MAP.map(([eq,meaning,code])=>'<tr><td><b>'+eq+'</b></td><td>'+meaning+'</td><td><code>'+code+'</code></td></tr>').join('');
+}
+state.driftMode='none';
+$('drift').addEventListener('change',()=>{state.driftMode=$('drift').value;});
+renderMap();
+route();
+
+/* ================= PDF report (no external library) ================= */
+function reportItems(){
+  const data=state.payload;if(!data)return null;
+  const d=data.dataset,m=data.metrics,s=data.summary,c=data.config,now=new Date();
+  const items=[];const push=(text,style)=>items.push({text:String(text),style:style||'body'});
+  push('DyMETER run report','title');
+  push('Title: DyMETER streaming anomaly detection report - '+d.filename);
+  push('Generated: '+stamp(now));
+  push('Method: DyMETER, "Catching Every Ripple: Enhanced Anomaly Awareness via Dynamic Concept Adaptation" (IEEE TPAMI), Java implementation.');
+  push('Variant: '+data.variant+' - '+data.description);
+  push('1. Dataset','h2');
+  push('File: '+d.filename);
+  push('Data rows: '+d.rows+'    Feature columns: '+d.dimensions);
+  push('Columns: '+d.columns.join(', '));
+  push('Label column: '+(d.labelColumn>=0?(d.columns[d.labelColumn]+' (index '+d.labelColumn+', '+d.anomalies+' anomalies, '+
+    (100*d.anomalies/Math.max(1,d.rows)).toFixed(2)+' %)'):'none - unlabelled stream'));
+  push('Historical training segment: '+c.historical+' rows (20 % of the file)');
+  push('Streamed segment: '+s.rows+' rows processed online');
+  push('Feature means (historical): '+d.means.map(v=>Number(v).toFixed(3)).join(', '));
+  push('Feature standard deviations: '+d.deviations.map(v=>Number(v).toFixed(3)).join(', '));
+  push('2. Training and configuration','h2');
+  push('Adam epochs per stage (SCD, IEC, DSD): '+c.epochs);
+  push('Learning rate: '+c.learningRate+' per step, decayed x'+c.learningRateDecay+' over '+c.epochs+' epochs');
+  push('Minibatch size: '+c.batch+'    DTO windows |W_N| = |W_C| = '+c.window);
+  push('Autoencoder layer sizes: '+c.layers.join(' - ')+'    Latent width (PCA >= 70 % variance): '+c.latentWidth);
+  push('Hyper-parameters: tau = '+c.tau+', lambda = '+c.lambda+', kappa = '+c.kappa+', gamma = '+c.gamma+', mu_o = '+c.muO);
+  push('Learned mu_e (concept uncertainty): '+num(data.learned.muE)+'    Learned mu_p (pseudo-labelling): '+num(data.learned.muP));
+  push('mu_t (maximum training uncertainty): '+num(data.learned.muT));
+  push('Training time / inference time: '+(s.trainingMillis/1000).toFixed(2)+' s / '+(s.inferenceMillis/1000).toFixed(3)+' s');
+  push('Stream generator: '+(state.driftMode||'none')+'    Seed: '+$('seed').value);
+  push('3. Scores and metrics on this dataset','h2');
+  push('AUCROC: '+(m.aucroc===null?'n/a (unlabelled)':num(m.aucroc))+'    AUCPR: '+(m.aucpr===null?'n/a (unlabelled)':num(m.aucpr)));
+  push('False-positive rate at mu*: '+pct(m.fpr)+'    Recall (true-positive rate): '+pct(m.recall));
+  push('Precision: '+pct(m.precision)+'    Flagged records: '+m.flagged+' of '+s.rows);
+  push('Labelled positives / negatives: '+m.positives+' / '+m.negatives);
+  push('Mean anomaly score A(x): '+num(avg(data.curves.score))+'    Mean reconstruction error R_e: '+num(avg(data.curves.error)));
+  push('Records escalated to the dynamic detector: '+s.driftRows);
+  push('Concept episodes: '+s.driftEpisodes+'    Threshold re-initialisations: '+s.thresholdResets+
+       '    Offline updates (Eq. 20): '+s.offlineUpdates);
+  push('4. Concept drift events (row numbers and reasons)','h2');
+  const events=data.driftEvents||[];
+  if(events.length){
+    events.forEach(event=>{
+      push('Row '+event.row+' - concept '+event.concept+' (U_ctr = '+num(event.uncertainty)+', R_e = '+num(event.error)+
+        ', mu* at onset = '+num(event.threshold)+', flagged: '+(event.anomaly?'anomaly':'normal')+')','body');
+      push('Reason: '+event.reason);
+    });
+  }else{
+    push('No concept drift was declared: the smoothed concept uncertainty never stayed above mu_e = '+num(data.learned.muE)+
+      ' for the required number of consecutive records, so the stream was handled by the static detector alone.');
+  }
+  push('5. Per-concept summary','h2');
+  [...new Set(data.curves.concept)].forEach(id=>{
+    const idx=data.curves.concept.map((v,i)=>v===id?i:-1).filter(i=>i>=0);
+    const flagged=idx.filter(i=>data.curves.decision[i]).length;
+    push('Concept '+id+': rows '+idx.length+', flagged '+flagged+', mean U_ctr '+num(avg(idx.map(i=>data.curves.uncertainty[i])))+
+      ', mean R_e '+num(avg(idx.map(i=>data.curves.error[i])))+', mean mu* '+num(avg(idx.map(i=>data.curves.threshold[i]))));
+  });
+  if(state.ablation&&state.ablation.length){
+    push('6. Ablation study (same stream and configuration)','h2');
+    state.ablation.forEach(r=>push(r.name+': AUCROC '+num(r.aucroc)+', AUCPR '+num(r.aucpr)+', FPR '+pct(r.fpr)+
+      ', recall '+pct(r.recall)+', concepts '+r.driftEpisodes+' - '+r.description));
+  }
+  push('7. Method recap','h2');
+  push('SCD (Eq. 3-4): symmetric DNN autoencoder trained with Adam on the historical segment.');
+  push('IEC (Eq. 2, 5-8): two-layer ReLU evidential classifier, focal evidential loss on pseudo-labels; U_ctr is the Dirichlet mutual information.');
+  push('DSD (Eq. 9-14): hypernetwork generating instance-aware parameter shifts Theta_d = Theta_s + Delta_Theta_d.');
+  push('DTO (Eq. 15-20): A(x) = R_e exp(lambda U_ctr (r_e - R_e)) scored against mu* = mu0 + kappa (mu0 - bAm), with drift re-initialisation and the parallel offline update.');
+  push('Figures A to D of this run are embedded in this PDF (pages below).');
+  push('Report generated by the DyMETER Java lab on '+stamp(now)+'.');
+  return items;
+}
+function reportText(items){
+  return items.map(item=>item.style==='title'?item.text.toUpperCase():(item.style==='h2'?'\n'+item.text.toUpperCase()+'\n'+'-'.repeat(60):'  '+item.text)).join('\n');
+}
+
+/* --- minimal PDF writer: page layout, Times fonts, JPEG images --- */
+function pdfAscii(text){return String(text).replace(/[^\x09\x0A\x0D\x20-\x7E]/g,'');}
+function pdfBytes(text){const s=pdfAscii(text);const out=new Uint8Array(s.length);for(let i=0;i<s.length;i++)out[i]=s.charCodeAt(i);return out;}
+function base64Bytes(dataUrl){const base64=dataUrl.substring(dataUrl.indexOf(',')+1);const binary=atob(base64);
+  const out=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)out[i]=binary.charCodeAt(i);return out;}
+function escapePdf(text){return pdfAscii(text).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');}
+function wrapPdf(text,size,width){
+  const limit=Math.max(24,Math.floor(width/(size*0.5)));
+  const words=escapePdf(text).split(/\s+/),lines=[];let line='';
+  words.forEach(word=>{
+    if((line?line+' '+word:word).length<=limit)line=line?line+' '+word:word;
+    else{if(line)lines.push(line);line=word;}
+  });
+  if(line)lines.push(line);
+  return lines.length?lines:[''];
+}
+function layoutPdf(items,figures){
+  const PW=595,PH=842,M=48,TOP=PH-56,BOTTOM=50,width=PW-2*M;
+  const spec={title:{font:'F2',size:16,lead:21},h2:{font:'F2',size:12,lead:17},body:{font:'F1',size:10,lead:13}};
+  const pages=[];let page={lines:[],figures:[]},y=TOP;
+  const newPage=()=>{pages.push(page);page={lines:[],figures:[]};y=TOP;};
+  items.forEach(item=>{
+    const style=spec[item.style]||spec.body;
+    wrapPdf(item.text,style.size,width).forEach(text=>{
+      if(y-style.lead<BOTTOM)newPage();
+      y-=style.lead;
+      page.lines.push({text,font:style.font,size:style.size,y});
+    });
+  });
+  (figures||[]).forEach(figure=>{
+    const maxWidth=width,maxHeight=PH-2*M-70;
+    const scale=Math.min(maxWidth/figure.width,maxHeight/figure.height);
+    const w=figure.width*scale,h=figure.height*scale;
+    if(y-h-50<BOTTOM)newPage();
+    y-=16;
+    page.lines.push({text:escapePdf(figure.caption),font:'F2',size:11,y});
+    y-=h+12;
+    page.figures.push({index:figure.index,x:(PW-w)/2,y,w,h});
+  });
+  pages.push(page);
+  return pages;
+}
+function buildPdfBlob(pages,images){
+  const parts=[];let length=0;const offsets=[];
+  const write=bytes=>{parts.push(bytes);length+=bytes.length;};
+  const text=value=>write(pdfBytes(value));
+  const objectCount=4+pages.length*2+images.length;
+  const pageObj=index=>5+index*2,contentObj=index=>6+index*2,imageObj=index=>5+pages.length*2+index;
+  write(new Uint8Array([0x25,0x50,0x44,0x46,0x2D,0x31,0x2E,0x34,0x0A,0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+  offsets[1]=length;
+  text('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  offsets[2]=length;
+  text('2 0 obj\n<< /Type /Pages /Kids ['+pages.map((page,index)=>pageObj(index)+' 0 R').join(' ')+
+       '] /Count '+pages.length+' >>\nendobj\n');
+  offsets[3]=length;
+  text('3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman /Encoding /WinAnsiEncoding >>\nendobj\n');
+  offsets[4]=length;
+  text('4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>\nendobj\n');
+  pages.forEach((page,index)=>{
+    const xobjects=page.figures.length?(' /XObject << '+page.figures.map(figure=>'/Im'+figure.index+' '+
+      imageObj(figure.index)+' 0 R').join(' ')+' >>'):'';
+    offsets[pageObj(index)]=length;
+    text(pageObj(index)+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R'+
+      ' /F2 4 0 R >>'+xobjects+' >> /Contents '+contentObj(index)+' 0 R >>\nendobj\n');
+    let content='';
+    page.lines.forEach(line=>{
+      content+='BT /'+line.font+' '+line.size+' Tf 48 '+line.y.toFixed(2)+' Td ('+line.text+') Tj ET\n';
+    });
+    page.figures.forEach(figure=>{
+      content+='q '+figure.w.toFixed(2)+' 0 0 '+figure.h.toFixed(2)+' '+figure.x.toFixed(2)+' '+figure.y.toFixed(2)+
+        ' cm /Im'+figure.index+' Do Q\n';
+    });
+    const stream=pdfBytes(content);
+    offsets[contentObj(index)]=length;
+    text(contentObj(index)+' 0 obj\n<< /Length '+stream.length+' >>\nstream\n');
+    write(stream);
+    text('endstream\nendobj\n');
+  });
+  images.forEach((image,index)=>{
+    const number=imageObj(index);
+    offsets[number]=length;
+    text(number+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+image.width+' /Height '+image.height+
+      ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+image.data.length+' >>\nstream\n');
+    write(image.data);
+    text('\nendstream\nendobj\n');
+  });
+  const startxref=length;
+  let xref='xref\n0 '+(objectCount+1)+'\n0000000000 65535 f \n';
+  for(let number=1;number<=objectCount;number++)xref+=String(offsets[number]||0).padStart(10,'0')+' 00000 n \n';
+  xref+='trailer\n<< /Size '+(objectCount+1)+' /Root 1 0 R >>\nstartxref\n'+startxref+'\n%%EOF\n';
+  text(xref);
+  return new Blob(parts,{type:'application/pdf'});
+}
+function reportFigures(){
+  const definitions=[
+    ['chart1','Figure A - anomaly score A(x) versus the adaptive threshold mu*(x)'],
+    ['chart2','Figure B - concept uncertainty U_ctr and reconstruction error R_e'],
+    ['chart3','Figure C - concept timeline with threshold re-initialisations'],
+    ['hist','Figure D - anomaly-score distribution against mu*']];
+  return definitions.filter(([id])=>$(id)).map(([id,caption],index)=>{
+    const canvas=$(id);
+    return {name:id,index,caption,width:canvas.width,height:canvas.height,
+      data:base64Bytes(canvas.toDataURL('image/jpeg',0.82))};
+  });
+}
+function downloadBlob(name,blob){
+  const anchor=document.createElement('a');
+  anchor.href=URL.createObjectURL(blob);anchor.download=name;
+  document.body.appendChild(anchor);anchor.click();
+  setTimeout(()=>{URL.revokeObjectURL(anchor.href);anchor.remove();},2000);
+}
+function download(name,textToSave,type){
+  downloadBlob(name,new Blob([textToSave],{type:type||'text/plain;charset=utf-8'}));
+}
+function downloadReport(){
+  const items=reportItems();
+  if(!items){
+    $('reportPreview').textContent='Run the pipeline first - the PDF report is generated from a completed run.';
+    $('reportInfo').textContent='Nothing to generate yet.';
+    return;
+  }
+  const images=reportFigures();
+  const pages=layoutPdf(items,images);
+  const blob=buildPdfBlob(pages,images);
+  $('reportPreview').textContent=reportText(items);
+  const name='DyMETER-report-'+state.filename.replace(/\.[^.]+$/,'')+'-'+fileStamp(new Date())+'.pdf';
+  downloadBlob(name,blob);
+  $('reportInfo').innerHTML='PDF downloaded as <b>'+name+'</b> ('+Math.round(blob.size/1024)+' kB, '+pages.length+
+    ' pages, '+images.length+' embedded figures, '+state.payload.config.epochs+' epochs, generated '+stamp(new Date())+')';
+}
+$('reportNow').addEventListener('click',downloadReport);
+
+/* ---------------- figure and data exports ---------------- */
+document.querySelectorAll('[data-png]').forEach(button=>button.addEventListener('click',()=>{
+  const canvas=$(button.dataset.png);
+  const anchor=document.createElement('a');
+  anchor.href=canvas.toDataURL('image/png');
+  anchor.download='DyMETER-'+button.dataset.name+'.png';
+  document.body.appendChild(anchor);anchor.click();anchor.remove();
+}));
+document.querySelectorAll('[data-csv]').forEach(button=>button.addEventListener('click',()=>{
+  const data=state.payload;if(!data)return;
+  let csv='';
+  if(button.dataset.csv==='rows'){
+    csv='row,concept,uncertainty,error,score,threshold,decision,drift,threshold_reset,labelled_anomaly\n';
+    data.results.forEach((row,index)=>csv+=[row.row,row.concept,row.uncertainty,row.error,row.score,row.threshold,
+      row.anomaly?1:0,data.curves.drift[index]?1:0,data.curves.reset[index]?1:0,
+      data.curves.label?(data.curves.label[index]?1:0):''].join(',')+'\n');
+  }else if(button.dataset.csv==='curves'){
+    csv='record,score,threshold,uncertainty,error,concept,decision\n';
+    data.curves.score.forEach((value,index)=>csv+=[index+1,value,data.curves.threshold[index],data.curves.uncertainty[index],
+      data.curves.error[index],data.curves.concept[index],data.curves.decision[index]?1:0].join(',')+'\n');
+  }else if(button.dataset.csv==='drift'){
+    csv='row,concept,uncertainty,error,threshold,flagged,reason\n';
+    (data.driftEvents||[]).forEach(event=>csv+=[event.row,event.concept,event.uncertainty,event.error,event.threshold,
+      event.anomaly?1:0,'"'+event.reason.replace(/"/g,"'")+'"'].join(',')+'\n');
+  }else if(button.dataset.csv==='ablation'){
+    csv='variant,aucroc,aucpr,fpr,recall,concepts,threshold_resets,offline_updates,description\n';
+    (state.ablation||[]).forEach(row=>csv+=[row.name,row.aucroc,row.aucpr,row.fpr,row.recall,row.driftEpisodes,
+      row.thresholdResets,row.offlineUpdates,'"'+row.description+'"'].join(',')+'\n');
+  }
+  if(csv)download('DyMETER-'+button.dataset.name+'-'+fileStamp(new Date())+'.csv',csv,'text/csv;charset=utf-8');
+}));
+</script>
+</body></html>

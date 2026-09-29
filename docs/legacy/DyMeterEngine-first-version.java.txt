@@ -1,0 +1,187 @@
+package dymeter;
+
+import java.util.*;
+
+/** DyMETER's SCD, IEC, DSD and DTO equations with data-derived setup and offline refresh. */
+public final class DyMeterEngine {
+    public record Config(int dimensions, int historicalRows, int windowSize, int epochs,
+                         int latentWidth, int hyperWidth, double muE, double tau,
+                         double lambda, double kappa, double muO, double gamma,
+                         double pseudoQuantile, double learningRate, double initScale,
+                         double emaRate, int maxInterval) {}
+    public record Result(int row, double[] features, int concept, double uncertainty, boolean anomaly, boolean drift,
+                         boolean updated, String detector) {}
+
+    private static final double HISTORICAL_RATIO=0.20;
+    private static final int WINDOW_SIZE=64;
+    private static final int EPOCHS=2000;
+    private static final double BASE_LR=1e-2, LR_DECAY=0.96, LR_DECAY_EPOCHS=2000;
+    private static final double GAMMA=2.0, LAMBDA=0.6, KAPPA=0.8, TAU=0.05, PSEUDO_QUANTILE=0.95;
+
+    private final int dimensions, windowSize, epochs, latentWidth, hyperWidth, maxInterval;
+    private final double tau, lambda, kappa, muO, gamma, pseudoQuantile, baseLearningRate, initScale, emaRate;
+    private final Random random=new Random();
+    private double muE, muP, referenceError, maxTrainingUncertainty, lastThreshold=Double.NaN;
+    private double[][] encoder, decoder, encoderShift, decoderShift, encoderOffset, decoderOffset, iecWeights;
+    private double[] latentBias, outputBias, iecBias;
+    private final Deque<Double> normalScores=new ArrayDeque<>(), candidates=new ArrayDeque<>(), uncertaintyWindow=new ArrayDeque<>();
+    private final Deque<double[]> normalRows=new ArrayDeque<>();
+    private List<double[]> baseHistory;
+
+    public static Config configure(List<double[]> rows) {
+        if(rows.size()<5) throw new IllegalArgumentException("At least five numeric rows are needed for the historical segment and stream.");
+        int d=rows.get(0).length;
+        int history=Math.max(1,(int)Math.ceil(rows.size()*HISTORICAL_RATIO));
+        if(history>=rows.size()) history=rows.size()-1;
+        int latent=principalComponentsForVariance(rows.subList(0,history),0.70);
+        double xavier=Math.sqrt(2.0/(d+latent));
+        int streamRows=rows.size()-history;
+        return new Config(d,history,WINDOW_SIZE,EPOCHS,latent,d,
+                Double.NaN,TAU,LAMBDA,KAPPA,WINDOW_SIZE*0.5,GAMMA,PSEUDO_QUANTILE,
+                BASE_LR,xavier,2.0/(WINDOW_SIZE+1),Math.max(1,(streamRows+1)/2));
+    }
+
+    public DyMeterEngine(Config c) {
+        dimensions=c.dimensions();windowSize=c.windowSize();epochs=c.epochs();latentWidth=c.latentWidth();hyperWidth=c.hyperWidth();maxInterval=c.maxInterval();
+        tau=c.tau();lambda=c.lambda();kappa=c.kappa();muO=c.muO();gamma=c.gamma();pseudoQuantile=c.pseudoQuantile();baseLearningRate=c.learningRate();initScale=c.initScale();emaRate=c.emaRate();muE=c.muE();
+    }
+
+    public Config config(int historicalRows) {
+        return new Config(dimensions,historicalRows,windowSize,epochs,latentWidth,hyperWidth,muE,tau,lambda,kappa,muO,gamma,pseudoQuantile,baseLearningRate,initScale,emaRate,maxInterval);
+    }
+
+    public void train(List<double[]> historical) {
+        if(historical.isEmpty()) throw new IllegalArgumentException("The historical training portion is empty.");
+        if(baseHistory==null) baseHistory=copyRows(historical);
+        boolean initialize=encoder==null;
+        if(initialize){
+            encoder=new double[dimensions][latentWidth];decoder=new double[latentWidth][dimensions];
+            encoderShift=new double[dimensions][latentWidth];decoderShift=new double[latentWidth][dimensions];
+            encoderOffset=new double[dimensions][latentWidth];decoderOffset=new double[latentWidth][dimensions];
+            latentBias=new double[latentWidth];outputBias=new double[dimensions];
+            iecWeights=new double[2][dimensions];iecBias=new double[2];
+            for(int i=0;i<dimensions;i++)for(int j=0;j<latentWidth;j++){
+                encoder[i][j]=random.nextGaussian()*initScale;decoder[j][i]=random.nextGaussian()*initScale;
+                encoderShift[i][j]=random.nextGaussian()*initScale;decoderShift[j][i]=random.nextGaussian()*initScale;
+                encoderOffset[i][j]=random.nextGaussian()*initScale;decoderOffset[j][i]=random.nextGaussian()*initScale;
+            }
+            muE=initialUncertainty();
+        }
+        normalScores.clear();candidates.clear();uncertaintyWindow.clear();normalRows.clear();
+        // SCD Eq. (3)-(4): fit the static encoder and decoder with the paper's squared error / n.
+        for(int epoch=0;epoch<epochs;epoch++){
+            double lr=learningRate(epoch);
+            for(double[] x:historical) updateAutoencoder(x,encoder,decoder,latentBias,outputBias,lr);
+        }
+        List<Double> errors=new ArrayList<>();
+        for(double[] x:historical)errors.add(mse(x,reconstruct(x,encoder,decoder,latentBias,outputBias)));
+        // Eq. (5): pseudo-positive iff the SCD reconstruction error exceeds μ_p; otherwise pseudo-negative.
+        muP=quantile(errors,pseudoQuantile);
+        referenceError=errors.stream().mapToDouble(Double::doubleValue).max().orElse(0);
+
+        // IEC Eq. (5)-(8): create pseudo labels from SCD reconstruction error and train evidential loss.
+        double confidenceLimit=muE;
+        for(int epoch=0;epoch<epochs;epoch++){
+            double lr=learningRate(epoch);
+            for(int i=0;i<historical.size();i++)if(uncertainty(historical.get(i))<=confidenceLimit)
+                trainIec(historical.get(i),errors.get(i)>muP?1:0,lr);
+        }
+        List<Double> uncertainties=new ArrayList<>();
+        for(double[] x:historical)uncertainties.add(uncertainty(x));
+        muE=Math.min(0.4,Math.max(0.005,quantile(uncertainties,0.95)));
+        maxTrainingUncertainty=0;
+        maxTrainingUncertainty=uncertainties.stream().mapToDouble(Double::doubleValue).max().orElse(muE);
+
+        // DSD Eq. (9)-(14): optimize instance-conditioned encoder/decoder shifts on reconstruction loss.
+        for(int epoch=0;epoch<epochs;epoch++){
+            double lr=learningRate(epoch);
+            for(double[] x:historical)updateShiftedAutoencoder(x,lr);
+        }
+        // Initialize DTO's normal-score and normal-row windows from confident SCD normal pseudo-labels.
+        for(int i=0;i<historical.size();i++){
+            double[] x=historical.get(i);double u=uncertainty(x),e=errors.get(i);
+            if(u<=muE&&e<=muP){double a=anomalyScore(e,u);normalScores.addLast(a);normalRows.addLast(x.clone());trim(normalScores);trim(normalRows);}
+        }
+        if(normalScores.isEmpty())throw new IllegalArgumentException("No high-confidence normal training rows were found for DTO calibration.");
+        lastThreshold=quantile(normalScores,1-tau);
+    }
+
+    public Result process(int rowNumber,double[] x) {
+        double u=uncertainty(x);boolean drift=u>muE;
+        if(drift&&!driftEpisodeActive){conceptNumber++;driftEpisodeActive=true;}
+        else if(!drift)driftEpisodeActive=false;
+        double[] y=drift?dynamicReconstruct(x):reconstruct(x,encoder,decoder,latentBias,outputBias);
+        double error=mse(x,y),score=anomalyScore(error,u);
+        double mu0=quantile(normalScores,1-tau);if(!Double.isFinite(mu0))mu0=lastThreshold;
+        double delta=mad(normalScores);
+        if(u>maxTrainingUncertainty&&Math.abs(score-mu0)<=delta){candidates.addLast(score);trim(candidates);}
+        double candidateMedian=median(candidates);
+        double muR=Double.isFinite(candidateMedian)?kappa*(mu0-candidateMedian):0;
+        double threshold=mu0+muR;boolean anomaly=score>threshold;lastThreshold=threshold;
+        if(!anomaly){normalScores.addLast(score);normalRows.addLast(x.clone());trim(normalScores);trim(normalRows);}
+        uncertaintyWindow.addLast(u>muE?u:0);trim(uncertaintyWindow);
+        double accumulated=uncertaintyWindow.stream().mapToDouble(Double::doubleValue).sum();
+        rowsSinceUpdate++;
+        boolean update=accumulated>muO||rowsSinceUpdate>maxInterval;
+        if(update)offlineUpdate();
+        else referenceError=(1-emaRate)*referenceError+emaRate*error;
+        return new Result(rowNumber,x.clone(),conceptNumber,u,anomaly,drift,update,drift?"DSD":"SCD");
+    }
+
+    private int rowsSinceUpdate;
+    private int conceptNumber=1;
+    private boolean driftEpisodeActive;
+    private void offlineUpdate(){
+        // Eq. (20): refresh after accumulated uncertain evidence or T_max.
+        // Paper's offline strategy fine-tunes from the current normal window while inference continues.
+        List<double[]> refresh=copyRows(baseHistory);
+        refresh.addAll(copyRows(normalRows));
+        train(refresh);
+        rowsSinceUpdate=0;
+    }
+
+    // Eq. (4): L_SCD = Σ_i (x_i-y_i)^2 / n; gradient is taken for this exact mean squared loss.
+    private void updateAutoencoder(double[] x,double[][] ew,double[][] dw,double[] zb,double[] yb,double lr){
+        double[] z=encode(x,ew,zb),y=decode(z,dw,yb),dz=new double[latentWidth];
+        for(int j=0;j<dimensions;j++){double g=2*(y[j]-x[j])/dimensions;yb[j]-=lr*g;for(int k=0;k<latentWidth;k++){dz[k]+=g*dw[k][j];dw[k][j]-=lr*g*z[k];}}
+        for(int k=0;k<latentWidth;k++){dz[k]*=1-z[k]*z[k];zb[k]-=lr*dz[k];for(int i=0;i<dimensions;i++)ew[i][k]-=lr*dz[k]*x[i];}
+    }
+    // Eqs. (9)-(14): input-conditioned hypernetwork shifts the SCD weights, then minimizes L_DSD.
+    private void updateShiftedAutoencoder(double[] x,double lr){
+        double[] cond=shared(x);double[][] ew=shifted(encoder,encoderShift,encoderOffset,cond),dw=shifted(decoder,decoderShift,decoderOffset,cond);
+        double[] z=encode(x,ew,latentBias),y=decode(z,dw,outputBias),dz=new double[latentWidth];
+        for(int j=0;j<dimensions;j++){double g=2*(y[j]-x[j])/dimensions;for(int k=0;k<latentWidth;k++){dz[k]+=g*dw[k][j];double grad=g*z[k];decoderShift[k][j]-=lr*grad*cond[(k+j)%cond.length];decoderOffset[k][j]-=lr*grad;}}
+        for(int k=0;k<latentWidth;k++){dz[k]*=1-z[k]*z[k];for(int i=0;i<dimensions;i++){double grad=dz[k]*x[i];encoderShift[i][k]-=lr*grad*cond[(i+k)%cond.length];encoderOffset[i][k]-=lr*grad;}}
+    }
+    // Eq. (7): focal evidential loss (1-p_hat_c)^γ [log(Σα_k)-log(α_c)].
+    private void trainIec(double[] x,int label,double lr){
+        double[] a=alpha(x);double sum=a[0]+a[1],pc=a[label]/sum,q=1-pc,focal=Math.pow(q,gamma),logTerm=Math.log(sum)-Math.log(a[label]);
+        for(int c=0;c<2;c++){double dq=c==label?-(sum-a[label])/(sum*sum):a[label]/(sum*sum);double dl=c==label?1/sum-1/a[label]:1/sum;double g=(gamma*Math.pow(q,gamma-1)*dq*logTerm+focal*dl)*(a[c]-1);iecBias[c]-=lr*g;for(int j=0;j<dimensions;j++)iecWeights[c][j]-=lr*g*x[j];}
+    }
+    private double[] alpha(double[] x){double[] a=new double[2];for(int c=0;c<2;c++){double v=iecBias[c];for(int j=0;j<dimensions;j++)v+=iecWeights[c][j]*x[j];a[c]=1+Math.exp(Math.max(-30,Math.min(30,v)));}return a;}
+    // Eqs. (6), (8): Dirichlet predictive probabilities and expected entropy / mutual-information uncertainty.
+    private double uncertainty(double[] x){double[] a=alpha(x);double s=a[0]+a[1],p0=a[0]/s,p1=a[1]/s;return Math.max(0,p0*(digamma(a[0]+1)-digamma(s+1))+p1*(digamma(a[1]+1)-digamma(s+1))-p0*Math.log(p0)-p1*Math.log(p1));}
+    private double initialUncertainty(){double[] a={2,2};double s=4;return Math.max(0,0.5*(digamma(3)-digamma(5))+0.5*(digamma(3)-digamma(5))-2*0.5*Math.log(0.5));}
+    // Eq. (15): A(x)=R_e exp(λ U_ctr (r_e-R_e)).
+    private double anomalyScore(double error,double u){return error*Math.exp(lambda*u*(referenceError-error));}
+    private double[] dynamicReconstruct(double[] x){double[] c=shared(x);return reconstruct(x,shifted(encoder,encoderShift,encoderOffset,c),shifted(decoder,decoderShift,decoderOffset,c),latentBias,outputBias);}
+    private double[] shared(double[] x){double[] e=new double[hyperWidth];for(int i=0;i<e.length;i++)e[i]=x[i%dimensions];return e;}
+    // Eqs. (10)-(12): W^(n)=(W1 e^(n)+b1)W2+b2; K^(n)=W^(n)+b^(n); Θ_d=Θ_s+ΔΘ_d.
+    private double[][] shifted(double[][] base,double[][] shift,double[][] offset,double[] e){double[][] out=new double[base.length][base[0].length];for(int i=0;i<base.length;i++)for(int j=0;j<base[i].length;j++){double w=shift[i][j]*e[(i+j)%e.length];double k=w+offset[i][j];out[i][j]=base[i][j]+k;}return out;}
+    private static double[] reconstruct(double[] x,double[][] e,double[][] d,double[] b,double[] c){return decode(encode(x,e,b),d,c);}
+    private static double[] encode(double[] x,double[][] w,double[] b){double[] z=b.clone();for(int i=0;i<x.length;i++)for(int j=0;j<z.length;j++)z[j]+=x[i]*w[i][j];for(int j=0;j<z.length;j++)z[j]=Math.tanh(z[j]);return z;}
+    private static double[] decode(double[] z,double[][] w,double[] b){double[] y=b.clone();for(int i=0;i<z.length;i++)for(int j=0;j<y.length;j++)y[j]+=z[i]*w[i][j];return y;}
+    private static double mse(double[] x,double[] y){double s=0;for(int i=0;i<x.length;i++)s+=(x[i]-y[i])*(x[i]-y[i]);return s/x.length;}
+    private double learningRate(int epoch){return baseLearningRate*Math.pow(LR_DECAY,(double)epoch/LR_DECAY_EPOCHS);}
+    private static int principalComponentsForVariance(List<double[]> rows,double target){int d=rows.get(0).length;double[] mean=new double[d];for(double[]r:rows)for(int j=0;j<d;j++)mean[j]+=r[j]/rows.size();double[][] a=new double[d][d];for(double[]r:rows)for(int i=0;i<d;i++)for(int j=0;j<d;j++)a[i][j]+=(r[i]-mean[i])*(r[j]-mean[j]);
+        for(int iter=0;iter<d*d*20;iter++){int p=0,q=1;double max=0;for(int i=0;i<d;i++)for(int j=i+1;j<d;j++)if(Math.abs(a[i][j])>max){max=Math.abs(a[i][j]);p=i;q=j;}if(max<1e-12)break;double angle=0.5*Math.atan2(2*a[p][q],a[q][q]-a[p][p]),c=Math.cos(angle),s=Math.sin(angle);double app=c*c*a[p][p]-2*s*c*a[p][q]+s*s*a[q][q],aqq=s*s*a[p][p]+2*s*c*a[p][q]+c*c*a[q][q];for(int k=0;k<d;k++)if(k!=p&&k!=q){double akp=c*a[k][p]-s*a[k][q],akq=s*a[k][p]+c*a[k][q];a[k][p]=a[p][k]=akp;a[k][q]=a[q][k]=akq;}a[p][p]=app;a[q][q]=aqq;a[p][q]=a[q][p]=0;}
+        double[] ev=new double[d];for(int i=0;i<d;i++)ev[i]=Math.max(0,a[i][i]);Arrays.sort(ev);double total=Arrays.stream(ev).sum(),sum=0;for(int n=1;n<=d;n++){sum+=ev[d-n];if(total==0||sum/total>=target)return n;}return d;}
+    private static List<double[]> copyRows(Collection<double[]> rows){List<double[]> out=new ArrayList<>();for(double[]r:rows)out.add(r.clone());return out;}
+    private <T> void trim(Deque<T> d){while(d.size()>windowSize)d.removeFirst();}
+    // Eq. (17): empirical CDF F_N(A)=|W_N|^-1 Σ 1(A_i≤A); inverse CDF gives μ_a^0.
+    private static double quantile(Collection<Double> v,double q){if(v.isEmpty())return Double.NaN;List<Double>s=new ArrayList<>(v);Collections.sort(s);return s.get(Math.min(s.size()-1,Math.max(0,(int)Math.ceil(q*s.size())-1)));}
+    // Eqs. (18)-(19): μ_a^r=κ(μ_a^0-Â_m); μ_a*=μ_a^0+μ_a^r.
+    private static double median(Collection<Double>v){return quantile(v,0.5);}
+    private static double mad(Collection<Double>v){if(v.isEmpty())return Double.NaN;double m=median(v);List<Double>d=new ArrayList<>();for(double x:v)d.add(Math.abs(x-m));return median(d);}
+    private static double digamma(double x){double r=0;while(x<8){r-=1/x;x++;}double z=1/x,z2=z*z;return r+Math.log(x)-0.5*z-z2*(1.0/12-z2*(1.0/120-z2/252));}
+}
